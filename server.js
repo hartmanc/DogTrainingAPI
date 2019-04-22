@@ -2,42 +2,7 @@
 
 const express = require('express');
 const app = express();
-
-/**********************************************************/
-/* DATASTORE and associated functions */
-/**********************************************************/
-/* By default, the client will authenticate using the service 
- * account file specified by the GOOGLE_APPLICATION_CREDENTIALS
- * environment variable and use the project specified by the
- * GOOGLE_CLOUD_PROJECT environment variable. These environment
- * variables are set automatically on Google App Engine.
- */
-const {Datastore} = require('@google-cloud/datastore');
-
-/* Instantiate a datastore client */
-const datastore = new Datastore();
-
-/**
- * Insert a record into the database.
- */
-function insertRecord(record, recordType) {
-    return datastore.save({
-        key: datastore.key(recordType),
-        data: record,
-    });
-}
-
-/**
- * Retrieve the latest 10 records from the database
- */
-function getRecords(recordType) {
-    const query = datastore
-        .createQuery(recordType)
-        .order('timestamp', {descending: true})
-        .limit(10);
-
-    return datastore.runQuery(query);
-}
+const db = require('./db/db');
 
 /**********************************************************/
 /* ROUTES */
@@ -55,11 +20,11 @@ app.get('/', async (req, res, next) => {
     };
 
     try {
-        await insertRecord(visit, 'visit');
-        const results = await getRecords('visit');
+        await db.insertRecord(visit, 'visit');
+        const results = await db.getRecords('visit');
         const entities = results[0];
         const visits = entities.map(entity => {
-            return `KEY: ${entity[datastore.KEY].id} Time: ${entity.timestamp}`;
+            return `KEY: ${entity[db.datastore.KEY].id} Time: ${entity.timestamp}`;
         });
         res
             .status(200)
