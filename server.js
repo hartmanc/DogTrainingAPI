@@ -3,6 +3,9 @@
 const express = require('express');
 const app = express();
 
+/**********************************************************/
+/* DATASTORE and associated functions */
+/**********************************************************/
 /* By default, the client will authenticate using the service 
  * account file specified by the GOOGLE_APPLICATION_CREDENTIALS
  * environment variable and use the project specified by the
@@ -36,6 +39,14 @@ function getRecords(recordType) {
     return datastore.runQuery(query);
 }
 
+/**********************************************************/
+/* ROUTES */
+/**********************************************************/
+const shipRoutes = require('./routes/ships');
+const slipRoutes = require('./routes/slips');
+app.use('/ships', shipRoutes);
+app.use('/slips', slipRoutes);
+
 app.get('/', async (req, res, next) => {
     // res.send('Hello from app engine!');
     // Create a record to store in the database
@@ -47,9 +58,9 @@ app.get('/', async (req, res, next) => {
         await insertRecord(visit, 'visit');
         const results = await getRecords('visit');
         const entities = results[0];
-        const visits = entities.map(
-            entity => `Time: ${entity.timestamp}`
-        );
+        const visits = entities.map(entity => {
+            return `KEY: ${entity[datastore.KEY].id} Time: ${entity.timestamp}`;
+        });
         res
             .status(200)
             .set('Content-Type', 'text/plain')
