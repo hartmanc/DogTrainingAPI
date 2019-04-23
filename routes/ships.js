@@ -92,7 +92,7 @@ router.patch('/:id', function(req, res, next) {
             if (req.body.name) {
                 model.find('name', '=', req.body.name, (err, ships) => {
                     /* find passes an array of ships to its call back */
-                    if (ships[0]) { /* Presumably, if you found a ship, the name is taken */
+                    if (ships[0] && ships[0].id !== req.params.id) { /* Presumably, if you found a ship, the name is taken */
                         /* HTTP Status - 400 Bad Request */
                         res.status(400);
                         res.send("Bad request - ship name already exists in datastore");
