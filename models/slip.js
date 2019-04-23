@@ -1,14 +1,14 @@
 'use strict'
 
-/* /models/ship.js */
-/* Data model for ship resources */
+/* /models/slip.js */
+/* Data model for slip resources */
 /* Heavily based on Google's model-datastore.js example */
 /* => https://github.com/GoogleCloudPlatform/nodejs-getting-started/blob/master/2-structured-data/books/model-datastore.js */
 
 /* [START config] */
 const db = require('../db/db');
 const ds = db.datastore;
-const kind = 'Ship';
+const kind = 'Slip';
 const nonIndexedProps = [];
 /* [START config] */
 
@@ -47,7 +47,7 @@ function list(limit, token, cb) {
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, ships, nextQuery) => {
+    ds.runQuery(q, (err, slips, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -56,15 +56,15 @@ function list(limit, token, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, ships.map(db.fromDatastore), hasMore);
+            cb(null, slips.map(db.fromDatastore), hasMore);
     });
 }
 
-/* Create a new ship or update an existing ship with new data.
+/* Create a new slip or update an existing slip with new data.
  * The provided data is translated into the appropriate format
  * for the datastore.
  * Parameters:
- * "id"   -> ship's ID. Required for updating, 
+ * "id"   -> slip's ID. Required for updating, 
  *           otherwise new key and entry will be generated.
  * "data" -> data to save in datastore.
  * "cb"   -> callback function.
@@ -100,7 +100,7 @@ function update(id, data, cb) {
     });
 }
 
-/* Wrapper for update to create a new ship
+/* Wrapper for update to create a new slip
  * Parameters:
  * "data" -> data to save in datastore.
  * "cb"   -> callback function.
@@ -109,10 +109,10 @@ function create(data, cb) {
     update(null, data, cb);
 }
 
-/* Search datastore for ship by id - on success, send
+/* Search datastore for slip by id - on success, send
  * to callback; otherwise, return error
  * Parameters:
- * "id"   -> ship's ID.
+ * "id"   -> slip's ID.
  * "cb"   -> callback function.
  */
 function read(id, cb) {
@@ -132,10 +132,10 @@ function read(id, cb) {
     });
 }
 
-/* Search datastore for ship by id - on success, delete
+/* Search datastore for slip by id - on success, delete
  * to callback; otherwise, do nothing.
  * Parameters:
- * "id"   -> ship's ID.
+ * "id"   -> slip's ID.
  * "cb"   -> callback function.
  * 
  * Note, if ID to delete doesn't exist, _delete will
@@ -147,9 +147,9 @@ function _delete(id, cb) {
     ds.delete(key, cb);
 }
 
-/* Search datastore for ship by property and value
+/* Search datastore for slip by property and value
  * Parameters:
- * "property" -> ship property
+ * "property" -> slip property
  * "value"    -> target value for property
  * "op"       -> operator for comparison; e.g., '=', '>', etc.
  * "cb"       -> callback function.
@@ -159,12 +159,12 @@ function find(property, op, value, cb) {
         .createQuery([kind])
         .filter(property, op, value);
 
-    ds.runQuery(q, (err, ships) => {
+    ds.runQuery(q, (err, slips) => {
         if (err) {
             cb(err);
             return;
         }
-        cb(null, ships.map(db.fromDatastore));
+        cb(null, slips.map(db.fromDatastore));
     });
 }
 
