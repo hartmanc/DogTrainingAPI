@@ -54,10 +54,8 @@ app.use((req, res) => {
 })
 
 /* General error handler */
-app.use((err, req, res) => {
-    console.log('Error handler');
-    console.log(err);
-    res.status(err.code || 500).send(err.message || 'Internal server error');
+app.use((err, req, res, next) => {
+    res.status(err.resCode || 500).send(err.resMsg || 'Internal server error');
 });
 
 /* Listen to the App Engine-specified port,

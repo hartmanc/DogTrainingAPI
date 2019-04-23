@@ -7,8 +7,8 @@
 
 /* [START config] */
 const db = require('../db/db');
-const kind = 'Ship';
 const ds = db.datastore;
+const kind = 'Ship';
 const nonIndexedProps = [];
 /* [START config] */
 
@@ -53,12 +53,11 @@ function list(limit, token, cb) {
             return;
         }
         const hasMore =
-            nextQuery.moreResults !== Datastore.NO_MORE_RESULTS
+            nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
             cb(null, entities.map(db.fromDatastore), hasMore);
     });
-    // TODO: this doesn't return anything, but it calls a callback
 }
 
 /* Create a new ship or update an existing ship with new data.
@@ -78,14 +77,26 @@ function update(id, data, cb) {
         key = ds.key(kind);
     }
 
-    const entity = {
-        key: key,
-        data: db.toDatastore(data, nonIndexedProps),
-    }
-
-    ds.save(entity, err => {
-        data.id = entity.key.id;
-        cb(err, err ? null : data);
+    /* Check if there is already an entry */
+    const target = {};
+    read(id, (err, source) => {
+        /* Merge if so */
+        if (!err && source != null) {
+            Object.assign(target, data);
+            Object.assign(source, target); // FIXME: This is backwards
+            Object.assign(target, source); // What is happening here
+        /* Otherwise, build target from scratch */
+        } else {
+            target = {
+                key: key,
+                data: db.toDatastore(data, nonIndexedProps),
+            }
+        }
+        /* Save to datastore */
+        ds.save(target, err => {
+            // data.id = target.key.id;
+            cb(err, err ? null : target);
+        });
     });
 }
 
@@ -109,8 +120,8 @@ function read(id, cb) {
     ds.get(key, (err, entity) => {
         if (!err && !entity) {
             err = {
-                code: 404,
-                message: 'Not found',
+                resCode: 404,
+                resMsg: 'Not found',
             };
         }
         if (err) {
