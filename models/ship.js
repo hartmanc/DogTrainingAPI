@@ -47,7 +47,7 @@ function list(limit, token, cb) {
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, entities, nextQuery) => {
+    ds.runQuery(q, (err, ships, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -56,7 +56,7 @@ function list(limit, token, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, entities.map(db.fromDatastore), hasMore);
+            cb(null, ships.map(db.fromDatastore), hasMore);
     });
 }
 
@@ -78,12 +78,12 @@ function update(id, data, cb) {
     }
 
     /* Check if there is already an entry */
-    const target = {};
+    let target = {};
     read(id, (err, source) => {
         /* Merge if so */
         if (!err && source != null) {
             Object.assign(target, data);
-            Object.assign(source, target); // FIXME: This is backwards
+            Object.assign(source, target);
             Object.assign(target, source); // What is happening here
         /* Otherwise, build target from scratch */
         } else {
@@ -143,6 +143,27 @@ function _delete(id, cb) {
     ds.delete(key, cb);
 }
 
+/* Search datastore for ship by property and value
+ * Parameters:
+ * "property" -> ship property
+ * "value"    -> target value for property
+ * "op"       -> operator for comparison; e.g., '=', '>', etc.
+ * "cb"       -> callback function.
+ */
+function find(property, op, value, cb) {
+    const q = ds
+        .createQuery([kind])
+        .filter(property, op, value);
+
+    ds.runQuery(q, (err, ships) => {
+        if (err) {
+            cb(err);
+            return;
+        }
+        cb(null, ships.map(db.fromDatastore));
+    });
+}
+
 /* [START exports] */
 module.exports = {
     create,
@@ -150,5 +171,6 @@ module.exports = {
     update,
     delete: _delete,
     list,
+    find,
 };
 /* [END exports] */

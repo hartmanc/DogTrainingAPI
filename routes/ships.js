@@ -50,27 +50,76 @@ router.get('/:id', function(req, res, next) {
 });
 
 router.post('/', function(req, res, next) {
-    model.create(req.body, (err, ship) => {
-        if (err) {
-            next(err);
-            return;
-        }
-        /* HTTP Status - 201 Created */
-        res.status(201);
-        res.send(ship);
-    });
+    if (req.body.name) {
+        model.find('name', '=', req.body.name, (err, ships) => {
+            /* find passes an array of ships to its call back */
+            if (ships[0]) { /* Presumably, if you found a ship, the name is taken */
+                /* HTTP Status - 400 Bad Request */
+                res.status(400);
+                res.send("Bad request - ship name already exists in datastore");
+            } else {
+                model.create(req.body, (err, ship) => {
+                    if (err) {
+                        next(err);
+                        return;
+                    }
+                    /* HTTP Status - 201 Created */
+                    res.status(201);
+                    res.send(ship);
+                });
+            }
+        });
+    } else {
+        /* HTTP Status - 400 Bad Request */
+        res.status(400);
+        res.send("Bad request - must include ship name");
+    }
 });
 
-// FIXME: Patch deletes properties not in req.body
+// TODO: This has gotten ugly - model.update parts could use refactoring
 router.patch('/:id', function(req, res, next) {
-    model.update(req.params.id, req.body, (err, ship) => {
+    /* Check that ship to update actually exists */
+    model.read(req.params.id, (err, ship) => {
         if (err) {
+            /* Assume bad request if error not spec'd */
+            /* TODO: more elegant way to handle these errors? */
+            err.resCode = err.resCode || 400;
+            err.resMsg = err.resMsg || "Bad request - invalid ship index";
             next(err);
             return;
+        } else {
+            /* If request has a name change, make sure name is not already in datastore */
+            if (req.body.name) {
+                model.find('name', '=', req.body.name, (err, ships) => {
+                    /* find passes an array of ships to its call back */
+                    if (ships[0]) { /* Presumably, if you found a ship, the name is taken */
+                        /* HTTP Status - 400 Bad Request */
+                        res.status(400);
+                        res.send("Bad request - ship name already exists in datastore");
+                    } else {
+                        model.update(req.params.id, req.body, (err, ship) => {
+                            if (err) {
+                                next(err);
+                                return;
+                            }
+                            /* HTTP Status - 200 OK; patch then respond */
+                            res.status(200);
+                            res.send(ship);
+                        });
+                    }
+                });
+            } else {
+                model.update(req.params.id, req.body, (err, ship) => {
+                    if (err) {
+                        next(err);
+                        return;
+                    }
+                    /* HTTP Status - 200 OK; patch then respond */
+                    res.status(200);
+                    res.send(ship);
+                });
+            }
         }
-        /* HTTP Status - 200 OK; patch then respond */
-        res.status(200);
-        res.send(ship);
     });
 });
 
