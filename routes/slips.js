@@ -181,7 +181,7 @@ router.put('/:id/ship', function(req, res, next) {
                                     return;
                                 }
                                 /* HTTP Status - 201 Created */
-                                res.status(201);
+                                res.status(200);
                                 res.send(slip);
                             });
                         }
@@ -190,6 +190,35 @@ router.put('/:id/ship', function(req, res, next) {
                     res.status(400);
                     res.send("Bad request - ship doesn't exist in datastore");
                 }
+            });
+        }
+    });
+});
+
+// Delete slip / ship relationship
+router.delete('/:id/ship', function(req, res, next) {
+    /* First, check that slip exists */
+    model.read(req.params.id, (err, targetSlip) => {
+        if (err) {
+            /* Assume bad request if error not spec'd */
+            err.resCode = err.resCode || 400;
+            err.resMsg = err.resMsg || "Bad request - invalid slip index";
+            next(err);
+            return;
+        } else {
+            /* Nullify current_boat and arrival_date to remove ship from slip */
+            const data = {
+                current_boat: null,
+                arrival_date: null
+            }
+            model.update(req.params.id, data, (err, slip) => {
+                if (err) {
+                    next (err);
+                    return;
+                }
+                /* HTTP Status - 201 Created */
+                res.status(200);
+                res.send(slip);
             });
         }
     });

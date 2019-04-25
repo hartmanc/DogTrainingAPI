@@ -9,6 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const model = require('../models/ship');
+const slipmodel = require('../models/slip');
 const LIST_LENGTH = 10;
 
 /**********************************************************/
@@ -129,10 +130,31 @@ router.delete('/:id', function(req, res, next) {
         if (err) {
             next(err);
             return;
-        }
-        /* HTTP Status - 200 OK; delete then respond */
-        res.status(200);
-        res.send(`Deleted /ships/${req.params.id}`);
+        } else {
+            /* Check if ship is in a slip */
+            slipmodel.find('current_boat', '=', req.params.id, (err, slips) => {
+                if (slips[0]) {
+                    /* Nullify current_boat and arrival_date to remove ship from slip */
+                    const data = {
+                        current_boat: null,
+                        arrival_date: null
+                    }
+                    slipmodel.update(slips[0].id, data, (err, slip) => {
+                        if (err) {
+                            next (err);
+                            return;
+                        }
+                        /* HTTP Status - 200 OK */
+                        res.status(200);
+                        res.send(`Ship deleted and removed from slip ${slips[0].id}`);
+                    });
+                } else {
+                    /* HTTP Status - 200 OK; delete then respond */
+                    res.status(200);
+                    res.send("Ship deleted, no slips modified");
+                }
+            });
+        } 
     })
 });
 
