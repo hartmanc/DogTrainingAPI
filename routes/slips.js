@@ -9,6 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const model = require('../models/slip');
+const shipmodel = require('../models/ship');
 const LIST_LENGTH = 10;
 
 /**********************************************************/
@@ -134,6 +135,90 @@ router.delete('/:id', function(req, res, next) {
         res.send(`Deleted /slips/${req.params.id}`);
     })
 });
+
+/**********************************************************/
+/* SLIP / SHIP "COMBINED" ROUTES */
+/**********************************************************/
+// Add slip / ship relationship
+router.put('/:id/ship', function(req, res, next) {
+    /* First, check that slip exists */
+    model.read(req.params.id, (err, targetSlip) => {
+        if (err) {
+            /* Assume bad request if error not spec'd */
+            err.resCode = err.resCode || 400;
+            err.resMsg = err.resMsg || "Bad request - invalid slip index";
+            next(err);
+            return;
+        /* Then, check that slip doesn't have ship */
+        } else if (targetSlip.current_boat != null) {
+            /* HTTP Status - 403 Forbidden */
+            res.status(403);
+            res.send("Bad request - slip with that ID already has ship");
+        /* Then, check that ship exists */
+        } else {
+            shipmodel.read(req.body.shipid, (err, ship) => {
+                if (err) {
+                    /* Assume bad request if error not spec'd */
+                    err.resCode = err.resCode || 400;
+                    err.resMsg = err.resMsg || "Bad request - invalid ship index";
+                    next(err);
+                    return;
+                } else if (ship) {
+                    /* Then, check that ship isn't already in slip */
+                    model.find('current_boat', '=', req.body.shipid, (err, slips) => {
+                        if (slips[0]) {
+                            res.status(400);
+                            res.send("Bad request - ship number already exists in a slip");
+                        } else {
+                            /* Finally, add ship to slip with timestamp */
+                            const data = {
+                                current_boat: ship.id,
+                                arrival_date: todaysDate()
+                            }
+                            model.update(req.params.id, data, (err, slip) => {
+                                if (err) {
+                                    next (err);
+                                    return;
+                                }
+                                /* HTTP Status - 201 Created */
+                                res.status(201);
+                                res.send(slip);
+                            });
+                        }
+                    });
+                } else {
+                    res.status(400);
+                    res.send("Bad request - ship doesn't exist in datastore");
+                }
+            });
+        }
+    });
+});
+
+/*
+ * Helper function - returns today's date as a string
+ * Taken from w3resource.com
+ */
+function todaysDate() {
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth()+1; 
+    var yyyy = today.getFullYear();
+
+    if(dd<10) 
+    {
+        dd='0'+dd;
+    } 
+
+    if(mm<10) 
+    {
+        mm='0'+mm;
+    }
+
+    today = mm + '/' + dd + '/' + yyyy;
+
+    return today;
+}
 
 /**********************************************************/
 /* SLIP ROUTES ERROR HANDLING */
