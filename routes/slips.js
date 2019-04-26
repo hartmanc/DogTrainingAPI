@@ -165,7 +165,7 @@ router.put('/:id/ship', function(req, res, next) {
                     return;
                 } else if (ship) {
                     /* Then, check that ship isn't already in slip */
-                    model.find('current_boat', '=', req.body.shipid, (err, slips) => {
+                    model.find('current_boat', '=', String(req.body.shipid), (err, slips) => {
                         if (slips[0]) {
                             res.status(400);
                             res.send("Bad request - ship number already exists in a slip");

@@ -132,7 +132,7 @@ router.delete('/:id', function(req, res, next) {
             return;
         } else {
             /* Check if ship is in a slip */
-            slipmodel.find('current_boat', '=', req.params.id, (err, slips) => {
+            slipmodel.find('current_boat', '=', req.params.id, (err, slips) => { // NOTE: all params are strings
                 if (slips[0]) {
                     /* Nullify current_boat and arrival_date to remove ship from slip */
                     const data = {
