@@ -12,6 +12,13 @@ const model = require('../models/slip');
 const shipmodel = require('../models/ship');
 const LIST_LENGTH = 10;
 
+let HOST_NAME = "";
+if (process.env.NODE_END === "production") {
+    HOST_NAME = `https://hartmaco-hw3.appspot.com`;
+} else {
+    HOST_NAME = `localhost:8080`;
+}
+
 /**********************************************************/
 /* SHIP ROUTES */
 /**********************************************************/
@@ -45,6 +52,8 @@ router.get('/:id', function(req, res, next) {
             return;
         }
         /* HTTP Status - 200 OK */
+        if (slip.current_boat != null)
+            slip.current_boat_url = `${HOST_NAME}/ships/${slip.current_boat}`;
         res.status(200);
         res.send(slip);
     });
