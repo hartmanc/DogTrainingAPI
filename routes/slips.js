@@ -13,7 +13,7 @@ const shipmodel = require('../models/ship');
 const LIST_LENGTH = 10;
 
 let HOST_NAME = "";
-if (process.env.NODE_END === "production") {
+if (process.env.NODE_ENV === "production") {
     HOST_NAME = `https://hartmaco-hw3.appspot.com`;
 } else {
     HOST_NAME = `localhost:8080`;
