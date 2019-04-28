@@ -82,3 +82,7 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Prettier / ESLint config files
+.eslintrc.json
+.prettierrc
