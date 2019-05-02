@@ -125,10 +125,9 @@ router.delete('/:id', function(req, res, next) {
             shipmodel.find('id', '=', targetCargo.carrier, (err, ship) => { // NOTE: all params are strings
                 /* Find and delete targetCargo in ship.cargo */
                 let cargoArray = ship.cargo;
-                if (ship) {
-                    const index = cargoArray.findIndex(cargoElement => cargoElement.id = req.params.id);
-                    cargoArray.splice(index, 1);
-                }
+                const index = cargoArray.findIndex(cargoElement => cargoElement.id = req.params.id);
+                cargoArray.splice(index, 1);
+
                 /* Update ship in datastore */
                 const data = {
                     cargo: cargoArray

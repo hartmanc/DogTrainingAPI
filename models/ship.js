@@ -106,6 +106,7 @@ function update(id, data, cb) {
  * "cb"   -> callback function.
  */
 function create(data, cb) {
+    data.cargo = []; /* No cargo assignment at ship creation */
     update(null, data, cb);
 }
 
