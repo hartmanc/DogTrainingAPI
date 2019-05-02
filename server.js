@@ -17,32 +17,14 @@ app.use(bodyParser.json());
 /**********************************************************/
 const shipRoutes = require('./routes/ships');
 const slipRoutes = require('./routes/slips');
+const cargoRoutes = require('./routes/cargos');
 app.use('/ships', shipRoutes);
 app.use('/slips', slipRoutes);
+app.use('/cargo', cargoRoutes); // "cargos" sounds weird
 
 app.get('/', async (req, res, next) => {
     res.status(200);
     res.send('Hello from app engine!');
-    // // Create a record to store in the database
-    // const visit = {
-    //     timestamp: new Date(),
-    // };
-
-    // try { // FIXME: This is broken now, after using Google code in db.js
-    //     await db.insertRecord(visit, 'visit');
-    //     const results = await db.getRecords('visit');
-    //     const entities = results[0];
-    //     const visits = entities.map(entity => {
-    //         return `KEY: ${entity[db.datastore.KEY].id} Time: ${entity.timestamp}`;
-    //     });
-    //     res
-    //         .status(200)
-    //         .set('Content-Type', 'text/plain')
-    //         .send(`Last 10 visits:\n${visits.join('\n')}`)
-    //         .end();
-    // } catch (error) {
-    //     next (error);
-    // }
 });
 
 /**********************************************************/
