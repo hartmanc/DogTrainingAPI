@@ -252,8 +252,8 @@ router.put('/:id/cargo/', function(req, res, next) {
                     });
                 /* Cargo exists and has carrier */
                 } else {
-                    res.status(400);
-                    res.send("Bad request - cargo already has carrier");
+                    res.status(403);
+                    res.send("Forbidden - cargo already has carrier");
                 }
             });
         }
