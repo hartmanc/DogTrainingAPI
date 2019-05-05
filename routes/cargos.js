@@ -12,6 +12,13 @@ const model = require('../models/cargo');
 const shipmodel = require('../models/ship');
 const LIST_LENGTH = 3;
 
+let HOST_NAME = "";
+if (process.env.NODE_ENV === "production") {
+    HOST_NAME = `https://hartmaco-hw3.appspot.com`;
+} else {
+    HOST_NAME = `localhost:8080`;
+}
+
 /**********************************************************/
 /* CARGO ROUTES */
 /**********************************************************/
@@ -30,7 +37,8 @@ router.get('/', function(req, res, next) {
         res.status(200);
         res.send({
             cargos: cargos,
-            nextPageToken: cursor
+            nextPageToken: cursor,
+            nextPageLink: `${HOST_NAME}/cargo?token=${cursor}`
         });
     });
 });
@@ -80,7 +88,7 @@ router.patch('/:id', function(req, res, next) {
             err.resMsg = err.resMsg || "Bad request - invalid cargo index";
             next(err);
             return;
-        } else if (req.body.id) {
+        } else if (req.body.id != undefined || req.body.self != undefined) {
             res.status(400).send("Bad request - cannot change cargo ID");
         } else {
             /* If request has a carrier change, make sure carrier is not already assigned to cargo in datastore */
@@ -122,29 +130,36 @@ router.delete('/:id', function(req, res, next) {
     model.read(req.params.id, (err, targetCargo) => {
         /* Check if cargo is in a ship */
         if (targetCargo != undefined && targetCargo.carrier != undefined) {
-            shipmodel.find('id', '=', targetCargo.carrier, (err, ship) => { // NOTE: all params are strings
-                /* Find and delete targetCargo in ship.cargo */
-                let cargoArray = ship.cargo;
-                const index = cargoArray.findIndex(cargoElement => cargoElement.id = req.params.id);
-                cargoArray.splice(index, 1);
+            shipmodel.read(targetCargo.carrier.id, (err, ship) => { // NOTE: all params are strings
+                if (ship != undefined) {
+                    /* Find and delete targetCargo in ship.cargo */
+                    let cargoArray = ship.cargo;
+                    const index = cargoArray.findIndex(cargoElement => cargoElement.id = req.params.id);
+                    cargoArray.splice(index, 1);
 
-                /* Update ship in datastore */
-                const data = {
-                    cargo: cargoArray
+                    /* Update ship in datastore */
+                    const data = {
+                        cargo: cargoArray
+                    }
+                    shipmodel.update(ship.id, data, (err) => {
+                        if (err) {
+                            next (err);
+                            return;
+                        }
+                    });
                 }
-                shipmodel.update(ship.id, data);
             });
         } 
-    });
-    /* Delete cargo from datastore */
-    model.delete(req.params.id, err => {
-        if (err) {
-            next(err);
-            return;
-        } else {
-            /* HTTP Status - 200 OK; delete then respond */
-            res.status(200).send("Cargo deleted");
-        }
+        /* Delete cargo from datastore */
+        model.delete(req.params.id, err => {
+            if (err) {
+                next(err);
+                return;
+            } else {
+                /* HTTP Status - 200 OK; delete then respond */
+                res.status(200).send("Cargo deleted");
+            }
+        });
     });
 });
 

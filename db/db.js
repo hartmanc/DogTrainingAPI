@@ -12,10 +12,26 @@ const {Datastore} = require('@google-cloud/datastore');
 /* Instantiate a datastore client */
 const datastore = new Datastore();
 
+/* API config */
+let HOST_NAME = "";
+if (process.env.NODE_ENV === "production") {
+    HOST_NAME = `https://hartmaco-hw3.appspot.com`;
+} else {
+    HOST_NAME = `localhost:8080`;
+}
+
+/* Global kind / route library */
+routes = {
+    Cargo: "cargo",
+    Ship: "ships",
+    Slip: "slips"
+}
+
 /* Translates datastore entity into format expected by app
  */
 function fromDatastore(obj) {
     obj.id = obj[Datastore.KEY].id;
+    obj.self = `${HOST_NAME}/${routes[obj[Datastore.KEY].kind]}/${obj.id}`;
     return obj;
 }
 

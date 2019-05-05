@@ -95,8 +95,8 @@ router.patch('/:id', function(req, res, next) {
             err.resMsg = err.resMsg || "Bad request - invalid ship index";
             next(err);
             return;
-        /* Do not allow patch to alter cargo */
-        } else if (req.body.cargo == undefined) {
+        /* Do not allow patch to alter cargo or self */
+        } else if (req.body.cargo == undefined && req.body.self == undefined) {
             /* If request has a name change, make sure name is not already in datastore */
             if (req.body.name) {
                 model.find('name', '=', req.body.name, (err, ships) => {
@@ -253,7 +253,7 @@ router.put('/:id/cargo/', function(req, res, next) {
                 /* Cargo exists and has carrier */
                 } else {
                     res.status(400);
-                    res.send("Bad request - ship doesn't exist in datastore");
+                    res.send("Bad request - cargo already has carrier");
                 }
             });
         }
