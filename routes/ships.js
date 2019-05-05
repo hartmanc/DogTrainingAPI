@@ -12,7 +12,7 @@ const slipModel = require('../models/slip');
 const cargoModel = require('../models/cargo');
 
 const router = express.Router();
-const LIST_LENGTH = 10;
+const LIST_LENGTH = 3;
 
 let HOST_NAME = "";
 if (process.env.NODE_ENV === "production") {
@@ -304,6 +304,28 @@ router.delete('/:shipid/cargo/:cargoid', function(req, res, next) {
                 res.status(404).send("Cargo not found on ship");
             }
         }
+    });
+});
+
+router.get('/:id/cargo', function(req, res, next) {
+    cargoModel.filterList(LIST_LENGTH, req.query.token, "carrier", "=", req.params.id,
+     (err, cargos, cursor) => {
+        if (err) {
+            /* Assume bad request if error not spec'd */
+            /* TODO: more elegant way to handle these errors? */
+            console.log(err);
+            err.resCode = err.resCode || 400;
+            err.resMsg = err.resMsg || "Bad request - invalid cargo index";
+            next(err);
+            return;
+        }
+        /* HTTP Status - 200 OK */
+        res.status(200);
+        res.send({
+            cargos: cargos,
+            nextPageToken: cursor,
+            nextPageLink: `${HOST_NAME}/ships/${req.params.id}/cargo?token=${cursor}`
+        });
     });
 });
 

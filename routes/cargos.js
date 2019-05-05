@@ -27,7 +27,6 @@ router.get('/', function(req, res, next) {
         if (err) {
             /* Assume bad request if error not spec'd */
             /* TODO: more elegant way to handle these errors? */
-            console.log(err);
             err.resCode = err.resCode || 400;
             err.resMsg = err.resMsg || "Bad request - invalid cargo index";
             next(err);

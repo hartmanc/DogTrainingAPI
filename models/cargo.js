@@ -61,6 +61,35 @@ function list(limit, token, cb) {
     });
 }
 
+/* Lists all boats in the datastore, after filtering, and
+ * it provides a token.
+ * Parameters:
+ * "limit" -> max. amount of results to return per page.
+ * "token" -> starting point for list. (TODO - Integer?).
+ * "cb" -> callback function.
+ * "property" -> cargo property
+ * "value"    -> target value for property
+ * "op"       -> operator for comparison; e.g., '=', '>', etc.
+ */
+function filterList(limit, token, property, op, value, cb) {
+    const q = ds
+        .createQuery([kind])
+        .limit(limit)
+        .start(token);
+
+    ds.runQuery(q, (err, cargos, nextQuery) => {
+        if (err) {
+            cb(err);
+            return;
+        }
+        const hasMore =
+            nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
+                ? nextQuery.endCursor
+                : false;
+            cb(null, cargos.map(db.fromDatastore), hasMore);
+    });
+}
+
 /* Create a new cargo or update an existing cargo with new data.
  * The provided data is translated into the appropriate format
  * for the datastore.
@@ -177,5 +206,6 @@ module.exports = {
     delete: _delete,
     list,
     find,
+    filterList
 };
 /* [END exports] */
