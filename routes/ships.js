@@ -22,6 +22,17 @@ if (process.env.NODE_ENV === "production") {
 }
 
 /**********************************************************/
+/* MIDDLEWARE */
+/**********************************************************/
+router.use(function(req, res, next) {
+    if (!req.accepts(['json','text'])) {
+        res.status(406).send("Not acceptable - available representations of resources include JSON and text");
+    } else {
+        next();
+    }
+})
+
+/**********************************************************/
 /* SHIP ROUTES */
 /**********************************************************/
 router.get('/', function(req, res, next) {
@@ -112,9 +123,8 @@ router.patch('/:id', function(req, res, next) {
                                 next(err);
                                 return;
                             }
-                            /* HTTP Status - 200 OK; patch then respond */
-                            res.status(200);
-                            res.send(ship);
+                            /* HTTP Status - 303 See Other */
+                            res.status(303).set("Location", `${HOST_NAME}/ships/${req.params.id}`).send();
                         });
                     }
                 });
@@ -124,9 +134,8 @@ router.patch('/:id', function(req, res, next) {
                         next(err);
                         return;
                     }
-                    /* HTTP Status - 200 OK; patch then respond */
-                    res.status(200);
-                    res.send(ship);
+                    /* HTTP Status - 303 See Other */
+                    res.status(303).set("Location", `${HOST_NAME}/ships/${req.params.id}`).send();
                 });
             }
         } else {
@@ -180,14 +189,12 @@ router.delete('/:id', function(req, res, next) {
                                 next (err);
                                 return;
                             }
-                            /* HTTP Status - 200 OK */
-                            res.status(200);
-                            res.send(`Ship deleted and removed from slip ${slips[0].id}`);
+                            /* HTTP Status - 204 No Content */
+                            res.status(204).send();
                         });
                     } else {
-                        /* HTTP Status - 200 OK; delete then respond */
-                        res.status(200);
-                        res.send("Ship deleted, no slips modified");
+                        /* HTTP Status - 204 No Content */
+                        res.status(204).send();
                     }
                 });
             } 
@@ -333,10 +340,12 @@ router.get('/:id/cargo', function(req, res, next) {
 /**********************************************************/
 /* SHIP ROUTES ERROR HANDLING */
 /**********************************************************/
-// router.use((err, req, res, next) => {
-//     /* Nothing specific going on here, right now */
-//     console.log("Ship error handler");
-//     next(err);
-// })
+router.all('/', (req, res, next) => {
+    res.status(405).set("Allow","GET, POST").send("Method not allowed");
+});
+
+router.all('/:id', (req, res, next) => {
+    res.status(405).set("Allow","GET, PATCH, DELETE").send("Method not allowed");
+});
 
 module.exports = router;
