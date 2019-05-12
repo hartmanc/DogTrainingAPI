@@ -25,7 +25,7 @@ if (process.env.NODE_ENV === "production") {
 /* MIDDLEWARE */
 /**********************************************************/
 router.use(function(req, res, next) {
-    if (!req.accepts(['json','text'])) {
+    if (!req.accepts(['json','html'])) {
         res.status(406).send("Not acceptable - available representations of resources include JSON and text");
     } else {
         next();
@@ -45,12 +45,17 @@ router.get('/', function(req, res, next) {
             return;
         }
         /* HTTP Status - 200 OK */
+        const nextPageLink = `${HOST_NAME}/ships?token=${cursor}`
         res.status(200);
-        res.send({
-            ships: ships,
-            nextPageToken: cursor,
-            nextPageLink: `${HOST_NAME}/ships?token=${cursor}`
-        });
+        if (req.accepts('html')) {
+            res.render('ships', {ships: ships, nextPageLink: nextPageLink});
+        } else {
+            res.send({
+                ships: ships,
+                nextPageToken: cursor,
+                nextPageLink: nextPageLink
+            });
+        }
     });
 });
 

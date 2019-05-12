@@ -7,6 +7,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
+// ejs
+app.set('view engine', 'ejs');
 // Parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 // Parse application/json
