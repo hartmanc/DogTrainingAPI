@@ -16,7 +16,7 @@ let HOST_NAME = "";
 if (process.env.NODE_ENV === "production") {
     HOST_NAME = `https://hartmaco-hw5.appspot.com`;
 } else {
-    HOST_NAME = `localhost:8080`;
+    HOST_NAME = `http://localhost:8080`;
 }
 
 /**********************************************************/

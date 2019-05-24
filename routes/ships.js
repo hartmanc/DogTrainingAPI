@@ -1,5 +1,3 @@
-'use strict';
-
 /* /routes/ships.js */
 /* RESTful routes for ship resources */
 
@@ -11,31 +9,36 @@ const model = require('../models/ship');
 const slipModel = require('../models/slip');
 const cargoModel = require('../models/cargo');
 
-const router = express.Router();
+const unprotected = express.Router();
+const protected = express.Router();
+
 const LIST_LENGTH = 3;
 
 let HOST_NAME = "";
 if (process.env.NODE_ENV === "production") {
     HOST_NAME = `https://hartmaco-hw5.appspot.com`;
 } else {
-    HOST_NAME = `localhost:8080`;
+    HOST_NAME = `http://localhost:8080`;
 }
 
 /**********************************************************/
 /* MIDDLEWARE */
 /**********************************************************/
-router.use(function(req, res, next) {
+function notAcceptableError(req, res, next) {
     if (!req.accepts(['json','html'])) {
         res.status(406).send("Not acceptable - available representations of resources include JSON and text");
     } else {
         next();
     }
-})
+}
+
+unprotected.use(notAcceptableError);
+protected.use(notAcceptableError);
 
 /**********************************************************/
 /* SHIP ROUTES */
 /**********************************************************/
-router.get('/', function(req, res, next) {
+unprotected.get('/', function(req, res, next) {
     model.list(LIST_LENGTH, req.query.token, (err, ships, cursor) => {
         if (err) {
             /* Assume bad request if error not spec'd */
@@ -59,7 +62,7 @@ router.get('/', function(req, res, next) {
     });
 });
 
-router.get('/:id', function(req, res, next) {
+unprotected.get('/:id', function(req, res, next) {
     model.read(req.params.id, (err, ship) => {
         if (err) {
             /* Assume bad request if error not spec'd */
@@ -75,7 +78,7 @@ router.get('/:id', function(req, res, next) {
     });
 });
 
-router.post('/', function(req, res, next) {
+unprotected.post('/', function(req, res, next) {
     if (req.body.name) {
         model.find('name', '=', req.body.name, (err, ships) => {
             /* find passes an array of ships to its call back */
@@ -102,7 +105,7 @@ router.post('/', function(req, res, next) {
     }
 });
 
-router.patch('/:id', function(req, res, next) {
+unprotected.patch('/:id', function(req, res, next) {
     /* Check that ship to update actually exists */
     model.read(req.params.id, (err, ship) => {
         if (err) {
@@ -150,7 +153,7 @@ router.patch('/:id', function(req, res, next) {
     });
 });
 
-router.delete('/:id', function(req, res, next) {
+unprotected.delete('/:id', function(req, res, next) {
     /* First, check that ship exists */
     model.read(req.params.id, (err, targetShip) => {
         if (err) {
@@ -211,7 +214,7 @@ router.delete('/:id', function(req, res, next) {
 /* CARGO / SHIP "COMBINED" ROUTES */
 /**********************************************************/
 // Add cargo / ship relationship
-router.put('/:id/cargo/', function(req, res, next) {
+unprotected.put('/:id/cargo/', function(req, res, next) {
     /* First, check that ship exists */
     model.read(req.params.id, (err, targetShip) => {
         if (err) {
@@ -274,7 +277,7 @@ router.put('/:id/cargo/', function(req, res, next) {
 });
 
 // Delete ship / ship relationship
-router.delete('/:shipid/cargo/:cargoid', function(req, res, next) {
+unprotected.delete('/:shipid/cargo/:cargoid', function(req, res, next) {
     /* First, check that ship exists */
     model.read(req.params.shipid, (err, targetShip) => {
         if (err) {
@@ -320,7 +323,7 @@ router.delete('/:shipid/cargo/:cargoid', function(req, res, next) {
     });
 });
 
-router.get('/:id/cargo', function(req, res, next) {
+unprotected.get('/:id/cargo', function(req, res, next) {
     cargoModel.filterList(LIST_LENGTH, req.query.token, "carrier", "=", req.params.id,
      (err, cargos, cursor) => {
         if (err) {
@@ -345,12 +348,15 @@ router.get('/:id/cargo', function(req, res, next) {
 /**********************************************************/
 /* SHIP ROUTES ERROR HANDLING */
 /**********************************************************/
-router.all('/', (req, res, next) => {
+unprotected.all('/', (req, res, next) => {
     res.status(405).set("Allow","GET, POST").send("Method not allowed");
 });
 
-router.all('/:id', (req, res, next) => {
+unprotected.all('/:id', (req, res, next) => {
     res.status(405).set("Allow","GET, PATCH, DELETE").send("Method not allowed");
 });
 
-module.exports = router;
+module.exports = {
+    protected: protected,
+    unprotected: unprotected
+};
