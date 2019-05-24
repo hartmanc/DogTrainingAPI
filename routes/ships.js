@@ -8,9 +8,10 @@ const express = require('express');
 const model = require('../models/ship');
 const slipModel = require('../models/slip');
 const cargoModel = require('../models/cargo');
+const auth = require('../auth/auth');
+const checkJwt = auth.checkJwt;
 
-const unprotected = express.Router();
-const protected = express.Router();
+const router = express.Router();
 
 const LIST_LENGTH = 3;
 
@@ -32,13 +33,12 @@ function notAcceptableError(req, res, next) {
     }
 }
 
-unprotected.use(notAcceptableError);
-protected.use(notAcceptableError);
+router.use(notAcceptableError);
 
 /**********************************************************/
 /* SHIP ROUTES */
 /**********************************************************/
-unprotected.get('/', function(req, res, next) {
+router.get('/', function(req, res, next) {
     model.list(LIST_LENGTH, req.query.token, (err, ships, cursor) => {
         if (err) {
             /* Assume bad request if error not spec'd */
@@ -62,7 +62,7 @@ unprotected.get('/', function(req, res, next) {
     });
 });
 
-unprotected.get('/:id', function(req, res, next) {
+router.get('/:id', function(req, res, next) {
     model.read(req.params.id, (err, ship) => {
         if (err) {
             /* Assume bad request if error not spec'd */
@@ -78,7 +78,8 @@ unprotected.get('/:id', function(req, res, next) {
     });
 });
 
-unprotected.post('/', function(req, res, next) {
+router.post('/', checkJwt, function(req, res, next) {
+    /* checkJwt middleware has already checked if user is logged in */
     if (req.body.name) {
         model.find('name', '=', req.body.name, (err, ships) => {
             /* find passes an array of ships to its call back */
@@ -87,7 +88,11 @@ unprotected.post('/', function(req, res, next) {
                 res.status(400);
                 res.send("Bad request - ship name already exists in datastore");
             } else {
-                model.create(req.body, (err, ship) => {
+                /* Add unique user ID (email) to ship data */
+                let data = Object.assign({}, req.body);
+                data.owner_name = req.user.name;
+                data.owner_id = req.user.sub;
+                model.create(data, (err, ship) => {
                     if (err) {
                         next(err);
                         return;
@@ -105,7 +110,7 @@ unprotected.post('/', function(req, res, next) {
     }
 });
 
-unprotected.patch('/:id', function(req, res, next) {
+router.patch('/:id', function(req, res, next) {
     /* Check that ship to update actually exists */
     model.read(req.params.id, (err, ship) => {
         if (err) {
@@ -153,13 +158,20 @@ unprotected.patch('/:id', function(req, res, next) {
     });
 });
 
-unprotected.delete('/:id', function(req, res, next) {
+router.delete('/:id', checkJwt, function(req, res, next) {
     /* First, check that ship exists */
     model.read(req.params.id, (err, targetShip) => {
         if (err) {
             /* Assume bad request if error not spec'd */
             err.resCode = err.resCode || 400;
             err.resMsg = err.resMsg || "Bad request - invalid ship index";
+            next(err);
+            return;
+        /* Check that user is authorized to delete ship */
+        } else if (targetShip !== undefined && targetShip.owner_name !== req.user.name) {
+            err = {};
+            err.resCode = 403;
+            err.resMsg = "Forbidden - only a ship's owner can delete a ship";
             next(err);
             return;
         /* Then, delete all references to this ship in cargo */
@@ -214,7 +226,7 @@ unprotected.delete('/:id', function(req, res, next) {
 /* CARGO / SHIP "COMBINED" ROUTES */
 /**********************************************************/
 // Add cargo / ship relationship
-unprotected.put('/:id/cargo/', function(req, res, next) {
+router.put('/:id/cargo/', function(req, res, next) {
     /* First, check that ship exists */
     model.read(req.params.id, (err, targetShip) => {
         if (err) {
@@ -277,7 +289,7 @@ unprotected.put('/:id/cargo/', function(req, res, next) {
 });
 
 // Delete ship / ship relationship
-unprotected.delete('/:shipid/cargo/:cargoid', function(req, res, next) {
+router.delete('/:shipid/cargo/:cargoid', function(req, res, next) {
     /* First, check that ship exists */
     model.read(req.params.shipid, (err, targetShip) => {
         if (err) {
@@ -323,7 +335,7 @@ unprotected.delete('/:shipid/cargo/:cargoid', function(req, res, next) {
     });
 });
 
-unprotected.get('/:id/cargo', function(req, res, next) {
+router.get('/:id/cargo', function(req, res, next) {
     cargoModel.filterList(LIST_LENGTH, req.query.token, "carrier", "=", req.params.id,
      (err, cargos, cursor) => {
         if (err) {
@@ -348,15 +360,12 @@ unprotected.get('/:id/cargo', function(req, res, next) {
 /**********************************************************/
 /* SHIP ROUTES ERROR HANDLING */
 /**********************************************************/
-unprotected.all('/', (req, res, next) => {
+router.all('/', (req, res, next) => {
     res.status(405).set("Allow","GET, POST").send("Method not allowed");
 });
 
-unprotected.all('/:id', (req, res, next) => {
+router.all('/:id', (req, res, next) => {
     res.status(405).set("Allow","GET, PATCH, DELETE").send("Method not allowed");
 });
 
-module.exports = {
-    protected: protected,
-    unprotected: unprotected
-};
+module.exports = router;

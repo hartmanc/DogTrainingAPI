@@ -23,8 +23,7 @@ const slipRoutes = require('./routes/slips');
 const cargoRoutes = require('./routes/cargos');
 const auth = require('./auth/auth');
 
-app.use('/ships', shipRoutes.unprotected);
-app.use('/ships', auth.checkJwt, shipRoutes.protected);
+app.use('/ships', shipRoutes);
 app.use('/slips', slipRoutes);
 app.use('/cargo', cargoRoutes); // "cargos" sounds weird
 
@@ -58,7 +57,7 @@ app.post('/login', function(req, res, next) {
             res.send(body);
         }
     })
-})
+});
 
 /**********************************************************/
 /* GENERAL ERROR HANDLING */
@@ -70,7 +69,8 @@ app.use((req, res) => {
 
 /* General error handler */
 app.use((err, req, res, next) => {
-    res.status(err.resCode || 500).send(err.resMsg || 'Internal server error');
+    res.status(err.resCode || err.status || 500);
+    res.send(err.resMsg || err.message || 'Internal server error');
 });
 
 /* Listen to the App Engine-specified port,
