@@ -17,7 +17,7 @@ const LIST_LENGTH = 3;
 
 let HOST_NAME = "";
 if (process.env.NODE_ENV === "production") {
-    HOST_NAME = `https://hartmaco-hw5.appspot.com`;
+    HOST_NAME = `https://hartmaco-hw6.appspot.com`;
 } else {
     HOST_NAME = `http://localhost:8080`;
 }
@@ -90,8 +90,8 @@ router.post('/', checkJwt, function(req, res, next) {
             } else {
                 /* Add unique user ID (email) to ship data */
                 let data = Object.assign({}, req.body);
-                data.owner_name = req.user.name;
-                data.owner_id = req.user.sub;
+                data.owner = req.user.name;
+                data.owner_id = req.user.sub.split('|').pop();
                 model.create(data, (err, ship) => {
                     if (err) {
                         next(err);
@@ -168,7 +168,7 @@ router.delete('/:id', checkJwt, function(req, res, next) {
             next(err);
             return;
         /* Check that user is authorized to delete ship */
-        } else if (targetShip !== undefined && targetShip.owner_name !== req.user.name) {
+        } else if (targetShip !== undefined && targetShip.owner !== req.user.name) {
             err = {};
             err.resCode = 403;
             err.resMsg = "Forbidden - only a ship's owner can delete a ship";

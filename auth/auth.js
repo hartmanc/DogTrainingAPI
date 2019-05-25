@@ -2,13 +2,6 @@ const jwt = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 const request = require('request');
 
-let HOST_NAME = "";
-if (process.env.NODE_ENV === "production") {
-    HOST_NAME = `https://hartmaco-hw5.appspot.com`;
-} else {
-    HOST_NAME = `http://localhost:8080`;
-}
-
 /* Auth config */
 const url = 'https://hartmaco.auth0.com';
 const grant_type = 'password';

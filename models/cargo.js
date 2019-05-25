@@ -74,6 +74,7 @@ function list(limit, token, cb) {
 function filterList(limit, token, property, op, value, cb) {
     const q = ds
         .createQuery([kind])
+        .filter(property, op, value)
         .limit(limit)
         .start(token);
 

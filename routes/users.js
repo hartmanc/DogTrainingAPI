@@ -18,7 +18,7 @@ const LIST_LENGTH = 3;
 
 let HOST_NAME = "";
 if (process.env.NODE_ENV === "production") {
-    HOST_NAME = `https://hartmaco-hw5.appspot.com`;
+    HOST_NAME = `https://hartmaco-hw6.appspot.com`;
 } else {
     HOST_NAME = `http://localhost:8080`;
 }
@@ -66,10 +66,29 @@ router.post('/', requestAuth0Token, function(req, res, next) {
         if (error) throw new Error(error);
         res.status(201).send(body);
     });
-})
+});
 
+/* Delete a user */
+router.delete('/:id', requestAuth0Token, function(req, res, next) {
+    const options = {
+        method: 'DELETE',
+        url: `${auth.url}/api/v2/users/auth0|${req.params.id}`,
+        headers: {
+            'authorization': `Bearer ${req.app.locals.auth0json.access_token}`
+        }
+    }
+    request(options, (error, response, body) => {
+        if (error) throw new Error(error)
+        else if (body !== "") {
+            body = JSON.parse(body);
+            res.status(body.statusCode).send(body.message);
+        } else res.status(204).send();
+    });
+});
+
+/* Get a list of ships owned by a user, when authorized */
 router.get('/:id/ships', checkJwt, function(req, res, next) {
-    if (req.user.sub !== req.params.id) {
+    if (req.user.sub !== `auth0|${req.params.id}`) {
         /* 403 error - user not authorized to view this user's summary */
         res.status(403);
         res.send("Forbidden: user is not authorized to view this ship list");

@@ -73,10 +73,11 @@ function list(limit, token, cb) {
 function filterList(limit, token, property, op, value, cb) {
     const q = ds
         .createQuery([kind])
+        .filter(property, op, value)
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, cargos, nextQuery) => {
+    ds.runQuery(q, (err, ships, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -85,7 +86,7 @@ function filterList(limit, token, property, op, value, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, cargos.map(db.fromDatastore), hasMore);
+            cb(null, ships.map(db.fromDatastore), hasMore);
     });
 }
 
