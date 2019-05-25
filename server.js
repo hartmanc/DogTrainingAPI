@@ -21,11 +21,13 @@ app.use(bodyParser.json());
 const shipRoutes = require('./routes/ships');
 const slipRoutes = require('./routes/slips');
 const cargoRoutes = require('./routes/cargos');
+const userRoutes = require('./routes/users');
 const auth = require('./auth/auth');
 
 app.use('/ships', shipRoutes);
 app.use('/slips', slipRoutes);
 app.use('/cargo', cargoRoutes); // "cargos" sounds weird
+app.use('/users', userRoutes);
 
 app.get('/', async (req, res, next) => {
     res.status(200);

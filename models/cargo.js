@@ -36,7 +36,7 @@ const nonIndexedProps = [];
 // ]
 /**********************************************************/
 
-/* Lists all boats in the datastore, in no particular order.
+/* Lists all cargo in the datastore, in no particular order.
  * Parameters:
  * "limit" -> max. amount of results to return per page.
  * "token" -> starting point for list. (TODO - Integer?).
@@ -61,7 +61,7 @@ function list(limit, token, cb) {
     });
 }
 
-/* Lists all boats in the datastore, after filtering, and
+/* Lists all cargo in the datastore, after filtering, and
  * it provides a token.
  * Parameters:
  * "limit" -> max. amount of results to return per page.
