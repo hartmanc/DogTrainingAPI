@@ -20,8 +20,8 @@ const HOST_NAME = require('../config');
 /* MIDDLEWARE */
 /**********************************************************/
 function notAcceptableError(req, res, next) {
-    if (!req.accepts(['json','html'])) {
-        res.status(406).send("Not acceptable - available representations of resources include JSON and text");
+    if (!req.accepts('json')) {
+        res.status(406).send("Not acceptable - only available representation of resources is JSON");
     } else {
         next();
     }
@@ -116,35 +116,14 @@ router.patch('/:id', function(req, res, next) {
             return;
         /* Do not allow patch to alter training or self */
         } else if (req.body.training == undefined && req.body.self == undefined) {
-            /* If request has a name change, make sure name is not already in datastore */
-            if (req.body.name) {
-                model.find('name', '=', req.body.name, (err, dogs) => {
-                    /* find passes an array of dogs to its call back */
-                    if (dogs[0] && dogs[0].id !== req.params.id) { /* Presumably, if you found a dog, the name is taken */
-                        /* HTTP Status - 400 Bad Request */
-                        res.status(400);
-                        res.send("Bad request - dog name already exists in datastore");
-                    } else {
-                        model.update(req.params.id, req.body, (err, dog) => {
-                            if (err) {
-                                next(err);
-                                return;
-                            }
-                            /* HTTP Status - 303 See Other */
-                            res.status(303).set("Location", `${HOST_NAME}/dogs/${req.params.id}`).send();
-                        });
-                    }
-                });
-            } else {
-                model.update(req.params.id, req.body, (err, dog) => {
-                    if (err) {
-                        next(err);
-                        return;
-                    }
-                    /* HTTP Status - 303 See Other */
-                    res.status(303).set("Location", `${HOST_NAME}/dogs/${req.params.id}`).send();
-                });
-            }
+            model.update(req.params.id, req.body, (err, dog) => {
+                if (err) {
+                    next(err);
+                    return;
+                }
+                /* HTTP Status - 303 See Other */
+                res.status(303).set("Location", `${HOST_NAME}/dogs/${req.params.id}`).send();
+            });
         } else {
             /* HTTP Status - 400 Bad Request */
             res.status(400).send("Bad request - training can't be altered here");

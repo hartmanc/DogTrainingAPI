@@ -24,7 +24,7 @@ const userRoutes = require('./routes/users');
 const auth = require('./auth/auth');
 
 app.use('/dogs', dogRoutes);
-app.use('/training', trainingRoutes); // "trainings" sounds weird
+app.use('/trainings', trainingRoutes); // "trainings" sounds weird
 app.use('/users', userRoutes);
 
 app.get('/', async (req, res, next) => {
