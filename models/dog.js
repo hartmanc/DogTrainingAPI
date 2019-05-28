@@ -1,15 +1,14 @@
-
 'use strict'
 
-/* /models/cargo.js */
-/* Data model for cargo resources */
+/* /models/dog.js */
+/* Data model for dog resources */
 /* Heavily based on Google's model-datastore.js example */
 /* => https://github.com/GoogleCloudPlatform/nodejs-getting-started/blob/master/2-structured-data/books/model-datastore.js */
 
 /* [START config] */
 const db = require('../db/db');
 const ds = db.datastore;
-const kind = 'Cargo';
+const kind = 'Dog';
 const nonIndexedProps = [];
 /* [START config] */
 
@@ -36,7 +35,7 @@ const nonIndexedProps = [];
 // ]
 /**********************************************************/
 
-/* Lists all cargo in the datastore, in no particular order.
+/* Lists all boats in the datastore, in no particular order.
  * Parameters:
  * "limit" -> max. amount of results to return per page.
  * "token" -> starting point for list. (TODO - Integer?).
@@ -48,7 +47,7 @@ function list(limit, token, cb) {
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, cargos, nextQuery) => {
+    ds.runQuery(q, (err, dogs, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -57,17 +56,17 @@ function list(limit, token, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, cargos.map(db.fromDatastore), hasMore);
+            cb(null, dogs.map(db.fromDatastore), hasMore);
     });
 }
 
-/* Lists all cargo in the datastore, after filtering, and
+/* Lists all dogs in the datastore, after filtering, and
  * it provides a token.
  * Parameters:
  * "limit" -> max. amount of results to return per page.
  * "token" -> starting point for list. (TODO - Integer?).
  * "cb" -> callback function.
- * "property" -> cargo property
+ * "property" -> training property
  * "value"    -> target value for property
  * "op"       -> operator for comparison; e.g., '=', '>', etc.
  */
@@ -78,7 +77,7 @@ function filterList(limit, token, property, op, value, cb) {
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, cargos, nextQuery) => {
+    ds.runQuery(q, (err, dogs, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -87,15 +86,15 @@ function filterList(limit, token, property, op, value, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, cargos.map(db.fromDatastore), hasMore);
+            cb(null, dogs.map(db.fromDatastore), hasMore);
     });
 }
 
-/* Create a new cargo or update an existing cargo with new data.
+/* Create a new dog or update an existing dog with new data.
  * The provided data is translated into the appropriate format
  * for the datastore.
  * Parameters:
- * "id"   -> cargo's ID. Required for updating, 
+ * "id"   -> dog's ID. Required for updating, 
  *           otherwise new key and entry will be generated.
  * "data" -> data to save in datastore.
  * "cb"   -> callback function.
@@ -131,19 +130,20 @@ function update(id, data, cb) {
     });
 }
 
-/* Wrapper for update to create a new cargo
+/* Wrapper for update to create a new dog
  * Parameters:
  * "data" -> data to save in datastore.
  * "cb"   -> callback function.
  */
 function create(data, cb) {
+    data.training = []; /* No training assignment at dog creation */
     update(null, data, cb);
 }
 
-/* Search datastore for cargo by id - on success, send
+/* Search datastore for dog by id - on success, send
  * to callback; otherwise, return error
  * Parameters:
- * "id"   -> cargo's ID.
+ * "id"   -> dog's ID.
  * "cb"   -> callback function.
  */
 function read(id, cb) {
@@ -163,10 +163,10 @@ function read(id, cb) {
     });
 }
 
-/* Search datastore for cargo by id - on success, delete
+/* Search datastore for dog by id - on success, delete
  * to callback; otherwise, do nothing.
  * Parameters:
- * "id"   -> cargo's ID.
+ * "id"   -> dog's ID.
  * "cb"   -> callback function.
  * 
  * Note, if ID to delete doesn't exist, _delete will
@@ -178,9 +178,9 @@ function _delete(id, cb) {
     ds.delete(key, cb);
 }
 
-/* Search datastore for cargo by property and value
+/* Search datastore for dog by property and value
  * Parameters:
- * "property" -> cargo property
+ * "property" -> dog property
  * "value"    -> target value for property
  * "op"       -> operator for comparison; e.g., '=', '>', etc.
  * "cb"       -> callback function.
@@ -190,12 +190,12 @@ function find(property, op, value, cb) {
         .createQuery([kind])
         .filter(property, op, value);
 
-    ds.runQuery(q, (err, cargos) => {
+    ds.runQuery(q, (err, dogs) => {
         if (err) {
             cb(err);
             return;
         }
-        cb(null, cargos.map(db.fromDatastore));
+        cb(null, dogs.map(db.fromDatastore));
     });
 }
 
@@ -206,7 +206,7 @@ module.exports = {
     update,
     delete: _delete,
     list,
+    filterList,
     find,
-    filterList
 };
 /* [END exports] */

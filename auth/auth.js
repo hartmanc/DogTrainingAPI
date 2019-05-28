@@ -5,8 +5,8 @@ const request = require('request');
 /* Auth config */
 const url = 'https://hartmaco.auth0.com';
 const grant_type = 'password';
-const client_id ='sshRL1DB0cy_Wq1M_3RbUPmA8BiyuMgg';
-const client_secret = '7vYUl9QEkDJzwiVbqiVwhAlnk9vQUDRob674KxUas0xzwr4zr8d0bgaZFBX8OZvA';
+const client_id ='SJ43BvUcJ1kzgkjIfWqr03K5AUKKYn7T';
+const client_secret = 'QzBSjbQcU-DhASn5HsuJFC_PP1gfURY06tuM_Mt0fv0k0NgVLUPrIHe_pIQKw3JJ';
 
 /* Function to check JWT credentials */
 const checkJwt = jwt({

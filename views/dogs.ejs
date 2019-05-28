@@ -1,0 +1,16 @@
+<h3>List of dogs</h3>
+<ul>
+    <% dogs.forEach(function(dog) { %>
+        <li><%= dog.name %>
+            <ul>
+                <li>ID: <%= dog.id %></li>
+                <li>Type: <%= dog.type %></li>
+                <li>Length: <%= dog.length %></li>
+                <li>
+                    <a href="<%= dog.self %>">View dog</a>
+                </li>
+            </ul>
+        </li>
+    <% }) %>
+</ul>
+<a href="<%= nextPageLink %>">More results</a>

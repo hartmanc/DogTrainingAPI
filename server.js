@@ -18,15 +18,13 @@ app.use(bodyParser.json());
 /**********************************************************/
 /* ROUTES */
 /**********************************************************/
-const shipRoutes = require('./routes/ships');
-const slipRoutes = require('./routes/slips');
-const cargoRoutes = require('./routes/cargos');
+const dogRoutes = require('./routes/dogs');
+const trainingRoutes = require('./routes/trainings');
 const userRoutes = require('./routes/users');
 const auth = require('./auth/auth');
 
-app.use('/ships', shipRoutes);
-app.use('/slips', slipRoutes);
-app.use('/cargo', cargoRoutes); // "cargos" sounds weird
+app.use('/dogs', dogRoutes);
+app.use('/training', trainingRoutes); // "trainings" sounds weird
 app.use('/users', userRoutes);
 
 app.get('/', async (req, res, next) => {

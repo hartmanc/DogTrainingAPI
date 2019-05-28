@@ -8,23 +8,15 @@
  * variables are set automatically on Google App Engine.
  */
 const {Datastore} = require('@google-cloud/datastore');
+const HOST_NAME = require('../config');
 
 /* Instantiate a datastore client */
 const datastore = new Datastore();
 
-/* API config */
-let HOST_NAME = "";
-if (process.env.NODE_ENV === "production") {
-    HOST_NAME = `https://hartmaco-hw7.appspot.com`;
-} else {
-    HOST_NAME = `localhost:8080`;
-}
-
 /* Global kind / route library */
 routes = {
-    Cargo: "cargo",
-    Ship: "ships",
-    Slip: "slips"
+    Training: "training",
+    Dog: "dogs",
 }
 
 /* Translates datastore entity into format expected by app

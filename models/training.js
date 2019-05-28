@@ -1,14 +1,15 @@
+
 'use strict'
 
-/* /models/ship.js */
-/* Data model for ship resources */
+/* /models/training.js */
+/* Data model for training resources */
 /* Heavily based on Google's model-datastore.js example */
 /* => https://github.com/GoogleCloudPlatform/nodejs-getting-started/blob/master/2-structured-data/books/model-datastore.js */
 
 /* [START config] */
 const db = require('../db/db');
 const ds = db.datastore;
-const kind = 'Ship';
+const kind = 'Training';
 const nonIndexedProps = [];
 /* [START config] */
 
@@ -35,7 +36,7 @@ const nonIndexedProps = [];
 // ]
 /**********************************************************/
 
-/* Lists all boats in the datastore, in no particular order.
+/* Lists all training in the datastore, in no particular order.
  * Parameters:
  * "limit" -> max. amount of results to return per page.
  * "token" -> starting point for list. (TODO - Integer?).
@@ -47,7 +48,7 @@ function list(limit, token, cb) {
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, ships, nextQuery) => {
+    ds.runQuery(q, (err, trainings, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -56,17 +57,17 @@ function list(limit, token, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, ships.map(db.fromDatastore), hasMore);
+            cb(null, trainings.map(db.fromDatastore), hasMore);
     });
 }
 
-/* Lists all ships in the datastore, after filtering, and
+/* Lists all training in the datastore, after filtering, and
  * it provides a token.
  * Parameters:
  * "limit" -> max. amount of results to return per page.
  * "token" -> starting point for list. (TODO - Integer?).
  * "cb" -> callback function.
- * "property" -> cargo property
+ * "property" -> training property
  * "value"    -> target value for property
  * "op"       -> operator for comparison; e.g., '=', '>', etc.
  */
@@ -77,7 +78,7 @@ function filterList(limit, token, property, op, value, cb) {
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, ships, nextQuery) => {
+    ds.runQuery(q, (err, trainings, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -86,15 +87,15 @@ function filterList(limit, token, property, op, value, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, ships.map(db.fromDatastore), hasMore);
+            cb(null, trainings.map(db.fromDatastore), hasMore);
     });
 }
 
-/* Create a new ship or update an existing ship with new data.
+/* Create a new training or update an existing training with new data.
  * The provided data is translated into the appropriate format
  * for the datastore.
  * Parameters:
- * "id"   -> ship's ID. Required for updating, 
+ * "id"   -> training's ID. Required for updating, 
  *           otherwise new key and entry will be generated.
  * "data" -> data to save in datastore.
  * "cb"   -> callback function.
@@ -130,20 +131,19 @@ function update(id, data, cb) {
     });
 }
 
-/* Wrapper for update to create a new ship
+/* Wrapper for update to create a new training
  * Parameters:
  * "data" -> data to save in datastore.
  * "cb"   -> callback function.
  */
 function create(data, cb) {
-    data.cargo = []; /* No cargo assignment at ship creation */
     update(null, data, cb);
 }
 
-/* Search datastore for ship by id - on success, send
+/* Search datastore for training by id - on success, send
  * to callback; otherwise, return error
  * Parameters:
- * "id"   -> ship's ID.
+ * "id"   -> training's ID.
  * "cb"   -> callback function.
  */
 function read(id, cb) {
@@ -163,10 +163,10 @@ function read(id, cb) {
     });
 }
 
-/* Search datastore for ship by id - on success, delete
+/* Search datastore for training by id - on success, delete
  * to callback; otherwise, do nothing.
  * Parameters:
- * "id"   -> ship's ID.
+ * "id"   -> training's ID.
  * "cb"   -> callback function.
  * 
  * Note, if ID to delete doesn't exist, _delete will
@@ -178,9 +178,9 @@ function _delete(id, cb) {
     ds.delete(key, cb);
 }
 
-/* Search datastore for ship by property and value
+/* Search datastore for training by property and value
  * Parameters:
- * "property" -> ship property
+ * "property" -> training property
  * "value"    -> target value for property
  * "op"       -> operator for comparison; e.g., '=', '>', etc.
  * "cb"       -> callback function.
@@ -190,12 +190,12 @@ function find(property, op, value, cb) {
         .createQuery([kind])
         .filter(property, op, value);
 
-    ds.runQuery(q, (err, ships) => {
+    ds.runQuery(q, (err, trainings) => {
         if (err) {
             cb(err);
             return;
         }
-        cb(null, ships.map(db.fromDatastore));
+        cb(null, trainings.map(db.fromDatastore));
     });
 }
 
@@ -206,7 +206,7 @@ module.exports = {
     update,
     delete: _delete,
     list,
-    filterList,
     find,
+    filterList
 };
 /* [END exports] */
