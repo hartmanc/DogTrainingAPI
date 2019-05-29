@@ -22,10 +22,12 @@ const LIST_LENGTH = 5;
 router.get('/', function(req, res, next) {
     model.list(LIST_LENGTH, req.query.token, (err, trainings, cursor) => {
         if (err) {
+            console.log('Error /trainings route:' + err + ', stack trace:');
+            console.log(err);
             /* Assume bad request if error not spec'd */
             /* TODO: more elegant way to handle these errors? */
             err.resCode = err.resCode || 400;
-            err.resMsg = err.resMsg || "Bad request - invalid training index";
+            err.resMsg = err.resMsg || "Bad request - probably bad pagination token";
             next(err);
             return;
         }
@@ -104,9 +106,10 @@ router.patch('/:id', function(req, res, next) {
                     next(err);
                     return;
                 }
-                /* HTTP Status - 200 OK; patch then respond */
-                res.status(200);
-                res.send(training);
+                /* HTTP Status - 303 See Other */
+                res.status(303)
+                res.set("Location", `${HOST_NAME}/trainings/${req.params.id}`)
+                res.send();
             });
         }
     });
@@ -114,29 +117,6 @@ router.patch('/:id', function(req, res, next) {
 
 router.delete('/:id', function(req, res, next) {
     model.read(req.params.id, (err, targetTraining) => {
-        /* Check if training is in a dog */
-        // if (targetTraining != undefined && targetTraining.dog != undefined) {
-        //     // TODO: No deletes if training is assigned to dog
-        //     dogmodel.read(targetTraining.dog.id, (err, dog) => { // NOTE: all params are strings
-        //         if (dog != undefined) {
-        //             /* Find and delete targetTraining in dog.training */
-        //             let trainingArray = dog.training;
-        //             const index = trainingArray.findIndex(trainingElement => trainingElement.id = req.params.id);
-        //             trainingArray.splice(index, 1);
-
-        //             /* Update dog in datastore */
-        //             const data = {
-        //                 training: trainingArray
-        //             }
-        //             dogmodel.update(dog.id, data, (err) => {
-        //                 if (err) {
-        //                     next (err);
-        //                     return;
-        //                 }
-        //             });
-        //         }
-        //     });
-        // } 
         /* Assume bad request if error not spec'd */
         if (err) {
             err.resCode = err.resCode || 400;
@@ -160,12 +140,14 @@ router.delete('/:id', function(req, res, next) {
 });
 
 /**********************************************************/
-/* CARGO ROUTES ERROR HANDLING */
+/* TRAINING ROUTES ERROR HANDLING */
 /**********************************************************/
-// router.use((err, req, res, next) => {
-//     /* Nothing specific going on here, right now */
-//     console.log("Training error handler");
-//     next(err);
-// })
+router.all('/', (req, res, next) => {
+    res.status(405).set("Allow","GET, POST").send("Method not allowed");
+});
+
+router.all('/:id', (req, res, next) => {
+    res.status(405).set("Allow","GET, PATCH, DELETE").send("Method not allowed");
+});
 
 module.exports = router;

@@ -13,7 +13,7 @@ const checkJwt = auth.checkJwt;
 const requestAuth0Token = auth.requestAuth0Token;
 const router = express.Router();
 
-const LIST_LENGTH = 3;
+const LIST_LENGTH = 5;
 const HOST_NAME = require('../config');
 
 /**********************************************************/
@@ -77,10 +77,10 @@ router.get('/:id/dogs', checkJwt, function(req, res, next) {
         (err, dogs, cursor) => {
             if (err) {
                 /* Assume bad request if error not spec'd */
-                /* TODO: more elegant way to handle these errors? */
+                console.log('Error /users/:id/dogs route:' + err + ', stack trace:');
                 console.log(err);
                 err.resCode = err.resCode || 400;
-                err.resMsg = err.resMsg || "Bad request - invalid dog index";
+                err.resMsg = err.resMsg || "Bad request - probably bad pagination token";
                 next(err);
                 return;
             }
@@ -89,7 +89,7 @@ router.get('/:id/dogs', checkJwt, function(req, res, next) {
             res.send({
                 dogs: dogs,
                 nextPageToken: cursor,
-                nextPageLink: `${HOST_NAME}/dogs/${req.params.id}/dog?token=${cursor}`
+                nextPageLink: `${HOST_NAME}/users/${req.params.id}/dogs?token=${cursor}`
             });
         });
     }

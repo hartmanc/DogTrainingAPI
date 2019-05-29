@@ -17,32 +17,23 @@ const LIST_LENGTH = 5;
 const HOST_NAME = require('../config');
 
 /**********************************************************/
-/* MIDDLEWARE */
-/**********************************************************/
-function notAcceptableError(req, res, next) {
-    if (!req.accepts('json')) {
-        res.status(406).send("Not acceptable - only available representation of resources is JSON");
-    } else {
-        next();
-    }
-}
-
-router.use(notAcceptableError);
-
-/**********************************************************/
-/* SHIP ROUTES */
+/* DOG ROUTES */
 /**********************************************************/
 router.get('/', function(req, res, next) {
     model.list(LIST_LENGTH, req.query.token, (err, dogs, cursor) => {
         if (err) {
-            /* Assume bad request if error not spec'd */
+            console.log('Error /dogs route:' + err + ', stack trace:');
+            console.log(err);
             err.resCode = err.resCode || 400;
-            err.resMsg = err.resMsg || "Bad request - invalid dog ID";
+            err.resMsg = err.resMsg || "Bad request - probably bad pagination token";
             next(err);
             return;
         }
         /* HTTP Status - 200 OK */
-        const nextPageLink = `${HOST_NAME}/dogs?token=${cursor}`
+        let nextPageLink = false;
+        if (cursor)
+            nextPageLink = `${HOST_NAME}/dogs?token=${cursor}`
+
         res.status(200);
         if (req.accepts('html')) {
             res.render('dogs', {dogs: dogs, nextPageLink: nextPageLink});
@@ -73,19 +64,21 @@ router.get('/:id', function(req, res, next) {
 });
 
 router.post('/', checkJwt, function(req, res, next) {
+    /* Extract usable ID */
+    owner_id = req.user.sub.split('|').pop();
     /* checkJwt middleware has already checked if user is logged in */
     if (req.body.name) {
         model.find('name', '=', req.body.name, (err, dogs) => {
             /* find passes an array of dogs to its call back */
-            if (dogs[0]) { /* Presumably, if you found a dog, the name is taken */
+            if (dogs[0] && dogs[0].owner_id === owner_id) { /* Presumably, if you found a dog, the name is taken */
                 /* HTTP Status - 400 Bad Request */
                 res.status(400);
-                res.send("Bad request - dog name already exists in datastore");
+                res.send("Bad request - dog name already exists in datastore for this user");
             } else {
                 /* Add unique user ID (email) to dog data */
                 let data = Object.assign({}, req.body);
                 data.owner = req.user.name;
-                data.owner_id = req.user.sub.split('|').pop();
+                data.owner_id = owner_id;
                 model.create(data, (err, dog) => {
                     if (err) {
                         next(err);
@@ -177,7 +170,7 @@ router.delete('/:id', checkJwt, function(req, res, next) {
 });
 
 /**********************************************************/
-/* CARGO / SHIP "COMBINED" ROUTES */
+/* TRAINING / DOG "COMBINED" ROUTES */
 /**********************************************************/
 // Add training / dog relationdog
 router.put('/:id/training/', function(req, res, next) {
@@ -312,7 +305,7 @@ router.get('/:id/training', function(req, res, next) {
 });
 
 /**********************************************************/
-/* SHIP ROUTES ERROR HANDLING */
+/* DOG ROUTES ERROR HANDLING */
 /**********************************************************/
 router.all('/', (req, res, next) => {
     res.status(405).set("Allow","GET, POST").send("Method not allowed");

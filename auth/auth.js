@@ -42,12 +42,12 @@ const requestAuth0Token = function(req, res, next) {
 
         request(options, (error, response, body) => {
             if (error) throw new Error(error);
-            console.log("Getting token");
+            // console.log("Getting token");
             req.app.locals.auth0json = body;
             next();
         });
     } else {
-        console.log("Don't need to get token");
+        // console.log("Don't need to get token");
         next();
     }
 }
