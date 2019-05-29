@@ -17,19 +17,6 @@ const LIST_LENGTH = 3;
 const HOST_NAME = require('../config');
 
 /**********************************************************/
-/* MIDDLEWARE */
-/**********************************************************/
-function notAcceptableError(req, res, next) {
-    if (!req.accepts(['json','html'])) {
-        res.status(406).send("Not acceptable - available representations of resources include JSON and text");
-    } else {
-        next();
-    }
-}
-
-router.use(notAcceptableError);
-
-/**********************************************************/
 /* USER ROUTES */
 /**********************************************************/
 /* Test route, just to check requestAuth0Token w/ console.log */

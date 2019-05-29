@@ -11,6 +11,8 @@ const router = express.Router();
 const model = require('../models/training');
 const dogmodel = require('../models/dog');
 
+const checkJwt = require('../auth/auth').checkJwt;
+
 const HOST_NAME = require('../config');
 const LIST_LENGTH = 5;
 
@@ -53,20 +55,30 @@ router.get('/:id', function(req, res, next) {
     });
 });
 
-router.post('/', function(req, res, next) {
-    /* All training should begin unassigned to any boat */
+router.post('/', checkJwt, function(req, res, next) {
+    /* All training should begin unassigned to any dog */
     if (req.body.dog) {
         /* HTTP Status - 400 Bad Request */
         res.status(400);
-        res.send("Bad request - new training should begin unassigned to any dog");
+        res.send("Bad request - new training should be unassigned to any dog");
+    } else if (req.body.trainer == undefined) {
+        res.status(400);
+        res.send("Bad request - new training must have 'trainer' key/value");
+    } else if (req.body.title == undefined) {
+        res.status(400);
+        res.send("Bad request - new training must have 'title' key/value");
     } else {
-        model.create(req.body, (err, training) => {
+        let data = Object.assign({}, req.body);
+        data.created_by_name = req.user.name;
+        data.created_by_id = req.user.sub.split('|').pop();
+        data.created_on_date = Date.now(); // Since Unix epoch
+        model.create(data, (err, training) => {
             if (err) {
                 next(err);
                 return;
             } else {
                 /* HTTP Status - 201 Created */
-                res.status(201).send(`${training.key.id}`);
+                res.status(201).json({id: `${training.key.id}`});
             }
         });
     }
@@ -84,38 +96,18 @@ router.patch('/:id', function(req, res, next) {
             return;
         } else if (req.body.id != undefined || req.body.self != undefined) {
             res.status(400).send("Bad request - cannot change training ID");
+        } else if (req.body.dog != undefined || req.body.dog_link != undefined) {
+            res.status(400).send("Bad request - cannot change dog ID with this interface");
         } else {
-            /* If request has a dog change, make sure dog is not already assigned to training in datastore */
-            if (req.body.dog) {
-                model.find('dog', '=', req.body.dog, (err, trainings) => {
-                    /* find passes an array of trainings to its call back */
-                    if (trainings[0] && trainings[0].id !== req.params.id) { /* Presumably, if you found a training, the dog is taken */
-                        /* HTTP Status - 400 Bad Request */
-                        res.status(400);
-                        res.send("Bad request - training dog already exists in datastore");
-                    } else {
-                        model.update(req.params.id, req.body, (err, training) => {
-                            if (err) {
-                                next(err);
-                                return;
-                            }
-                            /* HTTP Status - 200 OK; patch then respond */
-                            res.status(200);
-                            res.send(training);
-                        });
-                    }
-                });
-            } else {
-                model.update(req.params.id, req.body, (err, training) => {
-                    if (err) {
-                        next(err);
-                        return;
-                    }
-                    /* HTTP Status - 200 OK; patch then respond */
-                    res.status(200);
-                    res.send(training);
-                });
-            }
+            model.update(req.params.id, req.body, (err, training) => {
+                if (err) {
+                    next(err);
+                    return;
+                }
+                /* HTTP Status - 200 OK; patch then respond */
+                res.status(200);
+                res.send(training);
+            });
         }
     });
 });
@@ -123,37 +115,47 @@ router.patch('/:id', function(req, res, next) {
 router.delete('/:id', function(req, res, next) {
     model.read(req.params.id, (err, targetTraining) => {
         /* Check if training is in a dog */
-        if (targetTraining != undefined && targetTraining.dog != undefined) {
-            dogmodel.read(targetTraining.dog.id, (err, dog) => { // NOTE: all params are strings
-                if (dog != undefined) {
-                    /* Find and delete targetTraining in dog.training */
-                    let trainingArray = dog.training;
-                    const index = trainingArray.findIndex(trainingElement => trainingElement.id = req.params.id);
-                    trainingArray.splice(index, 1);
+        // if (targetTraining != undefined && targetTraining.dog != undefined) {
+        //     // TODO: No deletes if training is assigned to dog
+        //     dogmodel.read(targetTraining.dog.id, (err, dog) => { // NOTE: all params are strings
+        //         if (dog != undefined) {
+        //             /* Find and delete targetTraining in dog.training */
+        //             let trainingArray = dog.training;
+        //             const index = trainingArray.findIndex(trainingElement => trainingElement.id = req.params.id);
+        //             trainingArray.splice(index, 1);
 
-                    /* Update dog in datastore */
-                    const data = {
-                        training: trainingArray
-                    }
-                    dogmodel.update(dog.id, data, (err) => {
-                        if (err) {
-                            next (err);
-                            return;
-                        }
-                    });
+        //             /* Update dog in datastore */
+        //             const data = {
+        //                 training: trainingArray
+        //             }
+        //             dogmodel.update(dog.id, data, (err) => {
+        //                 if (err) {
+        //                     next (err);
+        //                     return;
+        //                 }
+        //             });
+        //         }
+        //     });
+        // } 
+        /* Assume bad request if error not spec'd */
+        if (err) {
+            err.resCode = err.resCode || 400;
+            err.resMsg = err.resMsg || "Bad request - invalid training ID";
+            next(err);
+            return;
+        /* If training can be found */
+        } else {
+            /* Delete training from datastore */
+            model.delete(req.params.id, err => {
+                if (err) {
+                    next(err);
+                    return;
+                } else {
+                    /* HTTP Status - 204 No Content */
+                    res.status(204).send();
                 }
             });
-        } 
-        /* Delete training from datastore */
-        model.delete(req.params.id, err => {
-            if (err) {
-                next(err);
-                return;
-            } else {
-                /* HTTP Status - 200 OK; delete then respond */
-                res.status(200).send("Training deleted");
-            }
-        });
+        }
     });
 });
 

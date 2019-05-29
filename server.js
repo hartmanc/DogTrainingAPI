@@ -16,6 +16,19 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 /**********************************************************/
+/* MIDDLEWARE */
+/**********************************************************/
+function notAcceptableError(req, res, next) {
+    if (!req.accepts('json')) {
+        res.status(406).send("Not acceptable - only available representation of resources is JSON");
+    } else {
+        next();
+    }
+}
+
+app.use(notAcceptableError);
+
+/**********************************************************/
 /* ROUTES */
 /**********************************************************/
 const dogRoutes = require('./routes/dogs');
