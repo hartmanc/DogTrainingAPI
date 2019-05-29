@@ -43,6 +43,7 @@ const nonIndexedProps = [];
  * "cb" -> callback function.
  */
 function list(limit, token, cb) {
+    if (token != undefined) token = token.replace(/ /g,"+");
     const q = ds
         .createQuery([kind])
         .limit(limit)
@@ -72,6 +73,7 @@ function list(limit, token, cb) {
  * "op"       -> operator for comparison; e.g., '=', '>', etc.
  */
 function filterList(limit, token, property, op, value, cb) {
+    if (token != undefined) token = token.replace(/ /g,"+");
     const q = ds
         .createQuery([kind])
         .filter(property, op, value)

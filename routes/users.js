@@ -77,19 +77,22 @@ router.get('/:id/dogs', checkJwt, function(req, res, next) {
         (err, dogs, cursor) => {
             if (err) {
                 /* Assume bad request if error not spec'd */
-                console.log('Error /users/:id/dogs route:' + err + ', stack trace:');
-                console.log(err);
                 err.resCode = err.resCode || 400;
                 err.resMsg = err.resMsg || "Bad request - probably bad pagination token";
                 next(err);
                 return;
             }
+            /* Build nextPageLink as appropriate */
+            let nextPageLink = false;
+            if (cursor)
+                nextPageLink = `${HOST_NAME}/users/${req.params.id}/dogs?token=${cursor}`
+
             /* HTTP Status - 200 OK */
             res.status(200);
             res.send({
                 dogs: dogs,
                 nextPageToken: cursor,
-                nextPageLink: `${HOST_NAME}/users/${req.params.id}/dogs?token=${cursor}`
+                nextPageLink: nextPageLink
             });
         });
     }

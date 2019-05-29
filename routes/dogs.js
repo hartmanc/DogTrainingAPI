@@ -22,28 +22,24 @@ const HOST_NAME = require('../config');
 router.get('/', function(req, res, next) {
     model.list(LIST_LENGTH, req.query.token, (err, dogs, cursor) => {
         if (err) {
-            console.log('Error /dogs route:' + err + ', stack trace:');
-            console.log(err);
+            /* Assume bad request if error not spec'd */
             err.resCode = err.resCode || 400;
             err.resMsg = err.resMsg || "Bad request - probably bad pagination token";
             next(err);
             return;
         }
-        /* HTTP Status - 200 OK */
+        /* Build nextPageLink as appropriate */
         let nextPageLink = false;
         if (cursor)
             nextPageLink = `${HOST_NAME}/dogs?token=${cursor}`
 
+        /* HTTP Status - 200 OK */
         res.status(200);
-        if (req.accepts('html')) {
-            res.render('dogs', {dogs: dogs, nextPageLink: nextPageLink});
-        } else {
-            res.send({
-                dogs: dogs,
-                nextPageToken: cursor,
-                nextPageLink: nextPageLink
-            });
-        }
+        res.send({
+            dogs: dogs,
+            nextPageToken: cursor,
+            nextPageLink: nextPageLink
+        });
     });
 });
 

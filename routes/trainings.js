@@ -22,21 +22,23 @@ const LIST_LENGTH = 5;
 router.get('/', function(req, res, next) {
     model.list(LIST_LENGTH, req.query.token, (err, trainings, cursor) => {
         if (err) {
-            console.log('Error /trainings route:' + err + ', stack trace:');
-            console.log(err);
             /* Assume bad request if error not spec'd */
-            /* TODO: more elegant way to handle these errors? */
             err.resCode = err.resCode || 400;
             err.resMsg = err.resMsg || "Bad request - probably bad pagination token";
             next(err);
             return;
         }
+        /* Build nextPageLink as appropriate */
+        let nextPageLink = false;
+        if (cursor)
+            nextPageLink = `${HOST_NAME}/training?token=${cursor}`
+
         /* HTTP Status - 200 OK */
         res.status(200);
         res.send({
             trainings: trainings,
             nextPageToken: cursor,
-            nextPageLink: `${HOST_NAME}/training?token=${cursor}`
+            nextPageLink: nextPageLink
         });
     });
 });
