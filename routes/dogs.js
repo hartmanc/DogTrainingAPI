@@ -169,6 +169,7 @@ router.delete('/:id', checkJwt, function(req, res, next) {
 /* TRAINING / DOG "COMBINED" ROUTES */
 /**********************************************************/
 // Add training / dog relationdog
+// TODO: Add auth requirement
 router.put('/:id/training/', function(req, res, next) {
     /* First, check that dog exists */
     model.read(req.params.id, (err, targetDog) => {

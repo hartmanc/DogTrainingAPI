@@ -1,14 +1,14 @@
 'use strict'
 
-/* /models/dog.js */
-/* Data model for dog resources */
+/* /models/user.js */
+/* Data model for user resources */
 /* Heavily based on Google's model-datastore.js example */
 /* => https://github.com/GoogleCloudPlatform/nodejs-getting-started/blob/master/2-structured-data/books/model-datastore.js */
 
 /* [START config] */
 const db = require('../db/db');
 const ds = db.datastore;
-const kind = 'Dog';
+const kind = 'User';
 const nonIndexedProps = [];
 /* [START config] */
 
@@ -35,7 +35,7 @@ const nonIndexedProps = [];
 // ]
 /**********************************************************/
 
-/* Lists all dogs in the datastore, in no particular order.
+/* Lists all users in the datastore, in no particular order.
  * Parameters:
  * "limit" -> max. amount of results to return per page.
  * "token" -> starting point for list. (TODO - Integer?).
@@ -48,7 +48,7 @@ function list(limit, token, cb) {
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, dogs, nextQuery) => {
+    ds.runQuery(q, (err, users, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -57,11 +57,11 @@ function list(limit, token, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, dogs.map(db.fromDatastore), hasMore);
+            cb(null, users.map(db.fromDatastore), hasMore);
     });
 }
 
-/* Lists all dogs in the datastore, after filtering, and
+/* Lists all users in the datastore, after filtering, and
  * it provides a token.
  * Parameters:
  * "limit" -> max. amount of results to return per page.
@@ -79,7 +79,7 @@ function filterList(limit, token, property, op, value, cb) {
         .limit(limit)
         .start(token);
 
-    ds.runQuery(q, (err, dogs, nextQuery) => {
+    ds.runQuery(q, (err, users, nextQuery) => {
         if (err) {
             cb(err);
             return;
@@ -88,15 +88,15 @@ function filterList(limit, token, property, op, value, cb) {
             nextQuery.moreResults !== db.Datastore.NO_MORE_RESULTS
                 ? nextQuery.endCursor
                 : false;
-            cb(null, dogs.map(db.fromDatastore), hasMore);
+            cb(null, users.map(db.fromDatastore), hasMore);
     });
 }
 
-/* Create a new dog or update an existing dog with new data.
+/* Create a new user or update an existing user with new data.
  * The provided data is translated into the appropriate format
  * for the datastore.
  * Parameters:
- * "id"   -> dog's ID. Required for updating, 
+ * "id"   -> user's Auth0 ID. Required for updating, 
  *           otherwise new key and entry will be generated.
  * "data" -> data to save in datastore.
  * "cb"   -> callback function.
@@ -104,9 +104,9 @@ function filterList(limit, token, property, op, value, cb) {
 function update(id, data, cb) {
     let key;
     if (id) {
-        key = ds.key([kind, parseInt(id, 10)]);
+        key = ds.key([kind, id]);
     } else {
-        key = ds.key(kind);
+        key = ds.key([kind, data.id]);
     }
 
     /* Check if there is already an entry */
@@ -132,24 +132,24 @@ function update(id, data, cb) {
     });
 }
 
-/* Wrapper for update to create a new dog
+/* Wrapper for update to create a new user
  * Parameters:
  * "data" -> data to save in datastore.
  * "cb"   -> callback function.
  */
 function create(data, cb) {
-    data.training = []; /* No training assignment at dog creation */
+    data.training = []; /* No training assignment at user creation */
     update(null, data, cb);
 }
 
-/* Search datastore for dog by id - on success, send
+/* Search datastore for user by "id" - on success, send
  * to callback; otherwise, return error
  * Parameters:
- * "id"   -> dog's ID.
+ * "id"   -> user's Auth0 ID.
  * "cb"   -> callback function.
  */
 function read(id, cb) {
-    const key = ds.key([kind, parseInt(id, 10)]);
+    const key = ds.key([kind, id]);
     ds.get(key, (err, entity) => {
         if (!err && !entity) {
             err = {
@@ -165,24 +165,24 @@ function read(id, cb) {
     });
 }
 
-/* Search datastore for dog by id - on success, delete
+/* Search datastore for user by id - on success, delete
  * to callback; otherwise, do nothing.
  * Parameters:
- * "id"   -> dog's ID.
+ * "id"   -> user's id.
  * "cb"   -> callback function.
  * 
- * Note, if ID to delete doesn't exist, _delete will
+ * Note, if id to delete doesn't exist, _delete will
  * not report an error. This is similar to MySQL; if
  * there is no error - that key doesn't exist anymore.
  */
 function _delete(id, cb) {
-    const key = ds.key([kind, parseInt(id, 10)]);
+    const key = ds.key([kind, id]);
     ds.delete(key, cb);
 }
 
-/* Search datastore for dog by property and value
+/* Search datastore for user by property and value
  * Parameters:
- * "property" -> dog property
+ * "property" -> user property
  * "value"    -> target value for property
  * "op"       -> operator for comparison; e.g., '=', '>', etc.
  * "cb"       -> callback function.
@@ -192,12 +192,12 @@ function find(property, op, value, cb) {
         .createQuery([kind])
         .filter(property, op, value);
 
-    ds.runQuery(q, (err, dogs) => {
+    ds.runQuery(q, (err, users) => {
         if (err) {
             cb(err);
             return;
         }
-        cb(null, dogs.map(db.fromDatastore));
+        cb(null, users.map(db.fromDatastore));
     });
 }
 

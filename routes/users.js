@@ -7,7 +7,9 @@
 const express = require('express');
 const request = require('request');
 
+const model = require('../models/user');
 const dogModel = require('../models/dog');
+
 const auth = require('../auth/auth');
 const checkJwt = auth.checkJwt;
 const requestAuth0Token = auth.requestAuth0Token;
@@ -28,42 +30,91 @@ router.get('/', requestAuth0Token, function(req, res, next) {
 
 /* Create a new user */
 router.post('/', requestAuth0Token, function(req, res, next) {
-    const options = {
-        method: 'POST',
-        url: `${auth.url}/api/v2/users`,
-        headers: {
-            'content-type': 'application/json',
-            'authorization': `Bearer ${req.app.locals.auth0json.access_token}`
-        },
-        body: {
-            email: req.body.email,
-            connection: "Username-Password-Authentication",
-            password: req.body.password
-        },
-        json: true
-    };
-    request(options, (error, response, body) => {
-        if (error) throw new Error(error);
-        res.status(201).send(body);
-    });
+    /* First check that email is not already used */
+    if (req.body.email) {
+        model.find('email', '=', req.body.email, (err, users) => {
+            /* find passes an array of users to its callback */
+            if (users[0] != undefined) {
+                /* If you got a user back, then that email is taken */
+                res.status(400);
+                res.send("Bad request - user email already exists in datastore");
+            } else {
+                /* Set up options to create user with Auth0*/
+                const options = {
+                    method: 'POST',
+                    url: `${auth.url}/api/v2/users`,
+                    headers: {
+                        'content-type': 'application/json',
+                        'authorization': `Bearer ${req.app.locals.auth0json.access_token}`
+                    },
+                    body: {
+                        email: req.body.email,
+                        connection: "Username-Password-Authentication",
+                        password: req.body.password
+                    },
+                    json: true
+                };
+                /* Auth0 user creation request */
+                request(options, (error, response, body) => {
+                    /* Create user in datastore */
+                    if (error) throw new Error(error);
+                    const data = {
+                        id: body.identities[0].user_id,
+                        email: req.body.email,
+                        created: Date.now(),
+                        dogs: []
+                    }
+                    model.create(data, err => {
+                        if (err) {
+                            res.status(500).send("Server error - auth database updated but local datastore encountered error");
+                        } else {
+                            /* Send Auth0 response with ID */
+                            res.status(201).send(data);
+                        }
+                    });
+                });
+            }
+        })
+    }
 });
 
-/* Delete a user */
+/* Delete a user */ 
+/* TODO: Currently, no user auth check before delete - admin func. only? */
 router.delete('/:id', requestAuth0Token, function(req, res, next) {
-    const options = {
-        method: 'DELETE',
-        url: `${auth.url}/api/v2/users/auth0|${req.params.id}`,
-        headers: {
-            'authorization': `Bearer ${req.app.locals.auth0json.access_token}`
+    /* First, check user exists */
+    model.read(req.params.id, (err, targetUser) => {
+        if (err) {
+            /* Assume bad request if not spec'd */
+            err.resCode = err.resCode || 400;
+            err.resMsg = err.resMsg || "Bad request - invalid user ID";
+            next(err);
+            return;
+        } else {
+            /* Delete user from local datastore */
+            model.delete(req.params.id, err => {
+                if (err) {
+                    next(err);
+                    return;
+                } else {
+                    /* Delete user from Auth0 */
+                    const options = {
+                        method: 'DELETE',
+                        url: `${auth.url}/api/v2/users/auth0|${req.params.id}`,
+                        headers: {
+                            'authorization': `Bearer ${req.app.locals.auth0json.access_token}`
+                        }
+                    }
+                    request(options, (error, response, body) => {
+                        if (error) throw new Error(error)
+                        else if (body !== "") {
+                            body = JSON.parse(body);
+                            res.status(body.statusCode).send(body.message);
+                        } else res.status(204).send();
+                    });
+                }
+            })
         }
-    }
-    request(options, (error, response, body) => {
-        if (error) throw new Error(error)
-        else if (body !== "") {
-            body = JSON.parse(body);
-            res.status(body.statusCode).send(body.message);
-        } else res.status(204).send();
-    });
+    })
 });
 
 /* Get a list of dogs owned by a user, when authorized */
