@@ -28,6 +28,23 @@ router.get('/', requestAuth0Token, function(req, res, next) {
     res.status(200).send("OK");
 });
 
+/* Get user with Auth0 ID */
+router.get('/:id', function(req, res, next) {
+    model.read(req.params.id, (err, user) => {
+        if (err) {
+            /* Assume bad request if error not spec'd */
+            /* TODO: more elegant way to handle these errors? */
+            err.resCode = err.resCode || 400;
+            err.resMsg = err.resMsg || "Bad request - invalid user ID";
+            next(err);
+            return;
+        }
+        /* HTTP Status - 200 OK */
+        res.status(200);
+        res.send(user);
+    });
+});
+
 /* Create a new user */
 router.post('/', requestAuth0Token, function(req, res, next) {
     /* First check that email is not already used */
@@ -62,7 +79,8 @@ router.post('/', requestAuth0Token, function(req, res, next) {
                         id: body.identities[0].user_id,
                         email: req.body.email,
                         created: Date.now(),
-                        dogs: []
+                        dogs: [],
+                        self: `${HOST_NAME}/users/${body.identities[0].user_id}`
                     }
                     model.create(data, err => {
                         if (err) {

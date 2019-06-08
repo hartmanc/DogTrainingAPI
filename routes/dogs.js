@@ -5,8 +5,11 @@
 /* CONFIG */
 /**********************************************************/
 const express = require('express');
+
 const model = require('../models/dog');
 const trainingModel = require('../models/training');
+const userModel = require('../models/user');
+
 const auth = require('../auth/auth');
 const checkJwt = auth.checkJwt;
 
@@ -62,7 +65,6 @@ router.get('/:id', function(req, res, next) {
 router.post('/', checkJwt, function(req, res, next) {
     /* Extract usable ID */
     owner_id = req.user.sub.split('|').pop();
-    /* checkJwt middleware has already checked if user is logged in */
     if (req.body.name) {
         model.find('name', '=', req.body.name, (err, dogs) => {
             /* find passes an array of dogs to its call back */
@@ -71,7 +73,8 @@ router.post('/', checkJwt, function(req, res, next) {
                 res.status(400);
                 res.send("Bad request - dog name already exists in datastore for this user");
             } else {
-                /* Add unique user ID (email) to dog data */
+                /* Create dog
+                 * Add unique user ID (email) to dog data */
                 let data = Object.assign({}, req.body);
                 data.owner = req.user.name;
                 data.owner_id = owner_id;
@@ -80,9 +83,30 @@ router.post('/', checkJwt, function(req, res, next) {
                         next(err);
                         return;
                     }
-                    /* HTTP Status - 201 Created */
-                    res.status(201);
-                    res.send(dog);
+                    /* Update user with new dog data */
+                    userModel.read(owner_id, (err, user) => {
+                        if (err) {
+                            /* Assume bad request if error not spec'd */
+                            err.resCode = err.resCode || 500;
+                            err.resMsg = err.resMsg || "Server error updating user dog collection";
+                            next(err);
+                            return;
+                        } else {
+                            user.dogs.push({
+                                id: dog.key.id,
+                                self: `${HOST_NAME}/dogs/${dog.key.id}`
+                            });
+                            userModel.update(owner_id, user, (err) => {
+                                if (err) {
+                                    next (err);
+                                    return;
+                                }
+                                /* HTTP Status - 201 Created */
+                                res.status(201);
+                                res.send(dog);
+                            });
+                        }
+                    });
                 });
             }
         });
@@ -168,7 +192,7 @@ router.delete('/:id', checkJwt, function(req, res, next) {
 /**********************************************************/
 /* TRAINING / DOG "COMBINED" ROUTES */
 /**********************************************************/
-// Add training / dog relationdog
+// Add training / dog relationship
 // TODO: Add auth requirement
 router.put('/:id/training/', function(req, res, next) {
     /* First, check that dog exists */
@@ -207,6 +231,7 @@ router.put('/:id/training/', function(req, res, next) {
                     /* Update dog data */
                     targetDog.training.push({
                         id: training.id,
+
                         self: `${HOST_NAME}/training/${training.id}`
                     })
                     const newTraining = targetDog.training;
@@ -232,7 +257,7 @@ router.put('/:id/training/', function(req, res, next) {
     });
 });
 
-// Delete dog / dog relationdog
+// Delete dog / relationship
 router.delete('/:dogid/training/:trainingid', function(req, res, next) {
     /* First, check that dog exists */
     model.read(req.params.dogid, (err, targetDog) => {

@@ -23,7 +23,7 @@ routes = {
  */
 function fromDatastore(obj) {
     obj.id = obj[Datastore.KEY].id;
-    obj.self = `${HOST_NAME}/${routes[obj[Datastore.KEY].kind]}/${obj.id}`;
+    // obj.self = `${HOST_NAME}/${routes[obj[Datastore.KEY].kind]}/${obj.id}`;
     return obj;
 }
 
