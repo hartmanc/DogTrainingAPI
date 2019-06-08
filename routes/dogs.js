@@ -145,6 +145,8 @@ router.patch('/:id', function(req, res, next) {
 });
 
 router.delete('/:id', checkJwt, function(req, res, next) {
+    /* Extract usable ID */
+    owner_id = req.user.sub.split('|').pop();
     /* First, check that dog exists */
     model.read(req.params.id, (err, targetDog) => {
         if (err) {
@@ -182,8 +184,29 @@ router.delete('/:id', checkJwt, function(req, res, next) {
                 next(err);
                 return;
             } else {
-                /* HTTP Status - 204 No Content */
-                res.status(204).send();
+                /* Cascade dog delete to user */
+                userModel.read(owner_id, (err, user) => {
+                    if (err) {
+                        /* Assume bad request if error not spec'd */
+                        err.resCode = err.resCode || 500;
+                        err.resMsg = err.resMsg || "Server error updating user dog collection";
+                        next(err);
+                        return;
+                    } else {
+                        /* Filter out dog with deleted ID */
+                        user.dogs = user.dogs.filter(dog => {
+                            return dog.id !== req.params.id;
+                        });
+                        userModel.update(owner_id, user, (err) => {
+                            if (err) {
+                                next (err);
+                                return;
+                            }
+                            /* HTTP Status - 204 No Content */
+                            res.status(204).send();
+                        });
+                    }
+                });
             } 
         });
     });
@@ -231,7 +254,6 @@ router.put('/:id/training/', function(req, res, next) {
                     /* Update dog data */
                     targetDog.training.push({
                         id: training.id,
-
                         self: `${HOST_NAME}/training/${training.id}`
                     })
                     const newTraining = targetDog.training;

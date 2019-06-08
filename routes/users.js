@@ -107,6 +107,13 @@ router.delete('/:id', requestAuth0Token, function(req, res, next) {
             err.resMsg = err.resMsg || "Bad request - invalid user ID";
             next(err);
             return;
+        } else if (targetUser.dogs.length > 0) {
+            /* Assume bad request if not spec'd */
+            err = {};
+            err.resCode = err.resCode || 400;
+            err.resMsg = err.resMsg || "Bad request - user with dogs can't be deleted";
+            next(err);
+            return;
         } else {
             /* Delete user from local datastore */
             model.delete(req.params.id, err => {
