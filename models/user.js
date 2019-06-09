@@ -138,7 +138,6 @@ function update(id, data, cb) {
  * "cb"   -> callback function.
  */
 function create(data, cb) {
-    data.training = []; /* No training assignment at user creation */
     update(null, data, cb);
 }
 

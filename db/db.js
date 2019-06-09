@@ -17,12 +17,13 @@ const datastore = new Datastore();
 routes = {
     Training: "trainings",
     Dog: "dogs",
+    User: "users"
 }
 
 /* Translates datastore entity into format expected by app
  */
 function fromDatastore(obj) {
-    obj.id = obj[Datastore.KEY].id;
+    obj.id = obj[Datastore.KEY].id || obj.id;
     // obj.self = `${HOST_NAME}/${routes[obj[Datastore.KEY].kind]}/${obj.id}`;
     return obj;
 }

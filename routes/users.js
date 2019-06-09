@@ -98,7 +98,8 @@ router.post('/', requestAuth0Token, function(req, res, next) {
 
 /* Delete a user */ 
 /* TODO: Currently, no user auth check before delete - admin func. only? */
-router.delete('/:id', requestAuth0Token, function(req, res, next) {
+router.delete('/:id', [requestAuth0Token, checkJwt], function(req, res, next) {
+    owner_id = req.user.sub.split('|').pop();
     /* First, check user exists */
     model.read(req.params.id, (err, targetUser) => {
         if (err) {
@@ -110,8 +111,15 @@ router.delete('/:id', requestAuth0Token, function(req, res, next) {
         } else if (targetUser.dogs.length > 0) {
             /* Assume bad request if not spec'd */
             err = {};
-            err.resCode = err.resCode || 400;
-            err.resMsg = err.resMsg || "Bad request - user with dogs can't be deleted";
+            err.resCode = 400;
+            err.resMsg = "Bad request - user with dogs can't be deleted";
+            next(err);
+            return;
+        } else if (targetUser.id != owner_id) {
+            /* Assume bad request if not spec'd */
+            err = {};
+            err.resCode = 403;
+            err.resMsg = "Forbidden - user doesn't have permission to delete this user";
             next(err);
             return;
         } else {

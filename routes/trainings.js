@@ -60,6 +60,7 @@ router.get('/:id', function(req, res, next) {
             return;
         }
         /* HTTP Status - 200 OK */
+        training.self = `${HOST_NAME}/trainings/${training.id}`;
         res.status(200);
         res.send(training);
     });
@@ -95,7 +96,7 @@ router.post('/', checkJwt, function(req, res, next) {
     }
 });
 
-router.patch('/:id', function(req, res, next) {
+router.patch('/:id', checkJwt, function(req, res, next) {
     /* Check that training to update actually exists */
     model.read(req.params.id, (err, training) => {
         if (err) {
@@ -124,7 +125,7 @@ router.patch('/:id', function(req, res, next) {
     });
 });
 
-router.delete('/:id', function(req, res, next) {
+router.delete('/:id', checkJwt, function(req, res, next) {
     model.read(req.params.id, (err, targetTraining) => {
         /* Assume bad request if error not spec'd */
         if (err) {

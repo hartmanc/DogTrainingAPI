@@ -42,6 +42,9 @@ router.get('/', function(req, res, next) {
             nextPageLink = `${HOST_NAME}/dogs?token=${cursor}`
 
         /* HTTP Status - 200 OK */
+        dogs.forEach(dog => {
+            dog.self = `${HOST_NAME}/dogs/${dog.id}`
+        });
         res.status(200);
         res.send({
             dogs: dogs,
@@ -63,6 +66,7 @@ router.get('/:id', function(req, res, next) {
             return;
         }
         /* HTTP Status - 200 OK */
+        dog.self = `${HOST_NAME}/dogs/${dog.id}`
         res.status(200);
         res.send(dog);
     });
@@ -124,7 +128,9 @@ router.post('/', checkJwt, function(req, res, next) {
     }
 });
 
-router.patch('/:id', function(req, res, next) {
+router.patch('/:id', checkJwt, function(req, res, next) {
+    /* Extract usable ID */
+    owner_id = req.user.sub.split('|').pop();
     /* Check that dog to update actually exists */
     model.read(req.params.id, (err, dog) => {
         if (err) {
@@ -134,6 +140,10 @@ router.patch('/:id', function(req, res, next) {
             err.resMsg = err.resMsg || "Bad request - invalid dog ID";
             next(err);
             return;
+        /* Do not allow non-owner to modify dog */
+        } else if (dog.owner_id !== owner_id) {
+            /* HTTP Status - 403 Forbidden */
+            res.status(403).send("Forbidden - only owner can modify dog");
         /* Do not allow patch to alter training or self */
         } else if (req.body.training == undefined && req.body.self == undefined) {
             model.update(req.params.id, req.body, (err, dog) => {
