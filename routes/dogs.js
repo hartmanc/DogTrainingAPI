@@ -217,22 +217,22 @@ router.delete('/:id', checkJwt, function(req, res, next) {
 /**********************************************************/
 // Add training / dog relationship
 // TODO: Add auth requirement
-router.put('/:id/training/', function(req, res, next) {
+router.put('/:id/trainings', function(req, res, next) {
     /* First, check that dog exists */
     model.read(req.params.id, (err, targetDog) => {
         if (err) {
             /* Assume bad request if error not spec'd */
-            err.resCode = err.resCode || 400;
-            err.resMsg = err.resMsg || "Bad request - invalid dog ID";
+            err.resCode = 400;
+            err.resMsg = "Bad request - invalid dog ID";
             next(err);
             return;
         /* Then, check that training exists */
         } else {
-            trainingModel.read(req.body.trainingId, (err, training) => {
+            trainingModel.read(req.body.training_id, (err, training) => {
                 if (err) {
                     /* Assume bad request if error not spec'd */
-                    err.resCode = err.resCode || 400;
-                    err.resMsg = err.resMsg || "Bad request - invalid training ID";
+                    err.resCode = 400;
+                    err.resMsg = "Bad request - invalid training ID";
                     next(err);
                     return;
                 /* Training exists and doesn't have dog */
@@ -245,7 +245,7 @@ router.put('/:id/training/', function(req, res, next) {
                             self: `${HOST_NAME}/dogs/${targetDog.id}`
                         }
                     };
-                    trainingModel.update(req.body.trainingId, trainingData, (err) => {
+                    trainingModel.update(req.body.training_id, trainingData, (err) => {
                         if (err) {
                             next (err);
                             return;
@@ -254,7 +254,7 @@ router.put('/:id/training/', function(req, res, next) {
                     /* Update dog data */
                     targetDog.training.push({
                         id: training.id,
-                        self: `${HOST_NAME}/training/${training.id}`
+                        self: `${HOST_NAME}/trainings/${training.id}`
                     })
                     const newTraining = targetDog.training;
                     const dogData = {
@@ -265,7 +265,7 @@ router.put('/:id/training/', function(req, res, next) {
                             next (err);
                             return;
                         }
-                        /* HTTP Status - 201 Created */
+                        /* HTTP Status - 200 OK */
                         res.status(200);
                         res.send(dog);
                     });
@@ -280,12 +280,12 @@ router.put('/:id/training/', function(req, res, next) {
 });
 
 // Delete dog / relationship
-router.delete('/:dogid/training/:trainingid', function(req, res, next) {
+router.delete('/:dogid/trainings/:trainingid', function(req, res, next) {
     /* First, check that dog exists */
     model.read(req.params.dogid, (err, targetDog) => {
         if (err) {
             /* Assume bad request if error not spec'd */
-            err.resCode = err.resCode || 400;
+            err.resCode = resCode || 400;
             err.resMsg = err.resMsg || "Bad request - invalid dog ID";
             next(err);
             return;
@@ -317,7 +317,7 @@ router.delete('/:dogid/training/:trainingid', function(req, res, next) {
                     }
                 });
                 /* HTTP Status - 200 OK */
-                res.status(200).send("Training removed from dog");
+                res.status(204).send();
             } else {
                 /* HTTP Status - 404 Not found */
                 res.status(404).send("Training not found on dog");
