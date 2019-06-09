@@ -26,7 +26,8 @@ const checkJwt = jwt({
  * deleting users */
 // TODO: Add something to check time and re-request token on expiration
 const requestAuth0Token = function(req, res, next) {
-    if (req.app.locals.auth0json == undefined) {
+    if (req.app.locals.auth0json == undefined ||
+        req.app.locals.auth0json.exp < Date.now()) {
         const options = {
             method: 'POST',
             url: `${url}/oauth/token`,
@@ -42,7 +43,8 @@ const requestAuth0Token = function(req, res, next) {
 
         request(options, (error, response, body) => {
             if (error) throw new Error(error);
-            // console.log("Getting token");
+            // This should fix token expiration bug
+            body.exp = Date.now() + body.expires_in;
             req.app.locals.auth0json = body;
             next();
         });

@@ -293,7 +293,7 @@ router.delete('/:dogid/trainings/:trainingid', function(req, res, next) {
     model.read(req.params.dogid, (err, targetDog) => {
         if (err) {
             /* Assume bad request if error not spec'd */
-            err.resCode = resCode || 400;
+            err.resCode = err.resCode || 400;
             err.resMsg = err.resMsg || "Bad request - invalid dog ID";
             next(err);
             return;
