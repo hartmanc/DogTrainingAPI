@@ -15,7 +15,7 @@ const datastore = new Datastore();
 
 /* Global kind / route library */
 routes = {
-    Training: "training",
+    Training: "trainings",
     Dog: "dogs",
 }
 

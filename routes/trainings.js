@@ -16,6 +16,11 @@ const checkJwt = require('../auth/auth').checkJwt;
 const HOST_NAME = require('../config');
 const LIST_LENGTH = 5;
 
+/* This is the worst way to do this...
+ * No persistence!
+ * Assumes 0 to start... yeesh */
+let trainingCount = 0;
+
 /**********************************************************/
 /* CARGO ROUTES */
 /**********************************************************/
@@ -38,7 +43,8 @@ router.get('/', function(req, res, next) {
         res.send({
             trainings: trainings,
             nextPageToken: cursor,
-            nextPageLink: nextPageLink
+            nextPageLink: nextPageLink,
+            totalCount: trainingCount
         });
     });
 });
@@ -81,6 +87,7 @@ router.post('/', checkJwt, function(req, res, next) {
                 next(err);
                 return;
             } else {
+                trainingCount++;
                 /* HTTP Status - 201 Created */
                 res.status(201).json({id: `${training.key.id}`});
             }
@@ -133,6 +140,7 @@ router.delete('/:id', function(req, res, next) {
                     next(err);
                     return;
                 } else {
+                    trainingCount--;
                     /* HTTP Status - 204 No Content */
                     res.status(204).send();
                 }

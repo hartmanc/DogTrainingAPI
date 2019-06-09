@@ -19,6 +19,11 @@ const LIST_LENGTH = 5;
 
 const HOST_NAME = require('../config');
 
+/* This is the worst way to do this...
+ * No persistence!
+ * Assumes 0 to start... yeesh */
+let dogCount = 0;
+
 /**********************************************************/
 /* DOG ROUTES */
 /**********************************************************/
@@ -41,7 +46,8 @@ router.get('/', function(req, res, next) {
         res.send({
             dogs: dogs,
             nextPageToken: cursor,
-            nextPageLink: nextPageLink
+            nextPageLink: nextPageLink,
+            totalCount: dogCount
         });
     });
 });
@@ -102,6 +108,7 @@ router.post('/', checkJwt, function(req, res, next) {
                                     return;
                                 }
                                 /* HTTP Status - 201 Created */
+                                dogCount++; // lol
                                 res.status(201);
                                 res.send(dog);
                             });
@@ -203,6 +210,7 @@ router.delete('/:id', checkJwt, function(req, res, next) {
                                 return;
                             }
                             /* HTTP Status - 204 No Content */
+                            dogCount--; // lol
                             res.status(204).send();
                         });
                     }
