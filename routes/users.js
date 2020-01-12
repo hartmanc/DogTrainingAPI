@@ -16,7 +16,7 @@ const requestAuth0Token = auth.requestAuth0Token;
 const router = express.Router();
 
 const LIST_LENGTH = 5;
-const HOST_NAME = require('../config');
+const HOST_NAME = require('../config').HOST_NAME;
 
 /**********************************************************/
 /* USER ROUTES */
@@ -183,7 +183,7 @@ router.get('/:id/dogs', checkJwt, function(req, res, next) {
 });
 
 /**********************************************************/
-/* SHIP ROUTES ERROR HANDLING */
+/* USER ROUTES ERROR HANDLING */
 /**********************************************************/
 router.all('/', (req, res, next) => {
     res.status(405).set("Allow","n/a").send("Method not allowed");

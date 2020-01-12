@@ -8,7 +8,6 @@
  * variables are set automatically on Google App Engine.
  */
 const {Datastore} = require('@google-cloud/datastore');
-const HOST_NAME = require('../config');
 
 /* Instantiate a datastore client */
 const datastore = new Datastore();

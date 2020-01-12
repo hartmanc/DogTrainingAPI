@@ -1,12 +1,13 @@
 const jwt = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 const request = require('request');
+const config = require('../config')
 
 /* Auth config */
-const url = 'https://hartmaco.auth0.com';
-const grant_type = 'password';
-const client_id ='SJ43BvUcJ1kzgkjIfWqr03K5AUKKYn7T';
-const client_secret = 'QzBSjbQcU-DhASn5HsuJFC_PP1gfURY06tuM_Mt0fv0k0NgVLUPrIHe_pIQKw3JJ';
+const url = config.url;
+const grant_type = config.grant_type; 
+const client_id = config.client_id;
+const client_secret = config.client_secret;
 
 /* Function to check JWT credentials */
 const checkJwt = jwt({

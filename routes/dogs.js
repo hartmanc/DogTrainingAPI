@@ -17,7 +17,7 @@ const router = express.Router();
 
 const LIST_LENGTH = 5;
 
-const HOST_NAME = require('../config');
+const HOST_NAME = require('../config').HOST_NAME;
 
 /* This is the worst way to do this...
  * No persistence!

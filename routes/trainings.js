@@ -13,7 +13,7 @@ const dogmodel = require('../models/dog');
 
 const checkJwt = require('../auth/auth').checkJwt;
 
-const HOST_NAME = require('../config');
+const HOST_NAME = require('../config').HOST_NAME;
 const LIST_LENGTH = 5;
 
 /* This is the worst way to do this...
@@ -22,7 +22,7 @@ const LIST_LENGTH = 5;
 let trainingCount = 0;
 
 /**********************************************************/
-/* CARGO ROUTES */
+/* TRAINING ROUTES */
 /**********************************************************/
 router.get('/', function(req, res, next) {
     model.list(LIST_LENGTH, req.query.token, (err, trainings, cursor) => {
