@@ -67,6 +67,7 @@ app.post('/login', function(req, res, next) {
         if (error) {
             next(error);
         } else {
+            res.status(response.statusCode); /* Copy Auth0 response code onto this response */
             res.send(body);
         }
     })
