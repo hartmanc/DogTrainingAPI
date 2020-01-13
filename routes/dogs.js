@@ -114,7 +114,9 @@ router.post('/', checkJwt, function(req, res, next) {
                                 /* HTTP Status - 201 Created */
                                 dogCount++; // lol
                                 res.status(201);
-                                res.send(dog);
+                                res.send({
+                                    "dogID": dog.key.id
+                                });
                             });
                         }
                     });
